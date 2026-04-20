@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '*'
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -51,3 +53,24 @@ jobs:
       with:
         name: ${{ matrix.artifact }}
         path: ${{ matrix.path }}
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+    - name: download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: dist/release-assets
+        merge-multiple: true
+    - name: publish release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        generate_release_notes: true
+        files: |
+          dist/release-assets/**/*.zip
+          dist/release-assets/**/*.exe
+          dist/release-assets/**/*.deb
+          dist/release-assets/**/*.rpm
