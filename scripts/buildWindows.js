@@ -39,6 +39,9 @@ async function afterPackageBuilt (packagePath) {
   const options = {
     src: packagePath,
     dest: 'dist/app/min-installer' + archSuffix,
+    name: 'min',
+    title: 'Min',
+    exe: 'Min.exe',
     icon: 'icons/icon256.ico',
     animation: 'icons/windows-installer.gif',
     licenseUrl: 'https://github.com/minbrowser/min/blob/master/LICENSE.txt',
