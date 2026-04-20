@@ -77,6 +77,27 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
     callback('')
   })
 
+  view.webContents.on('devtools-open-url', function (event, url) {
+    if (!url) {
+      return
+    }
+
+    event.preventDefault()
+
+    const eventTarget = getWindowFromViewContents(view.webContents) || windows.getCurrent()
+
+    if (!eventTarget) {
+      // this can happen during shutdown
+      return
+    }
+
+    getWindowWebContents(eventTarget).send('view-event', {
+      tabId: id,
+      event: 'new-tab',
+      args: [url, true]
+    })
+  })
+
   view.webContents.setWindowOpenHandler(function (details) {
     if (details.url && !filterPopups(details.url)) {
       return {
