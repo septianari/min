@@ -41,6 +41,8 @@ function toPath (platform, arch) {
 }
 
 module.exports = function (platform, extraOptions) {
+  const skipWinExeMetadataEdit = process.env.MIN_SKIP_WIN_EXE_METADATA_EDIT === '1'
+
   //https://github.com/electron-userland/electron-builder/issues/6365#issuecomment-1186038034
   const afterPack = async context => {
     const ext = {
@@ -99,10 +101,13 @@ module.exports = function (platform, extraOptions) {
     },
     win: {
       target: 'dir',
-      icon: 'icons/icon256.ico'
-      // Avoid winCodeSign extraction on environments without symlink privilege.
-      // This build path is for unsigned local artifacts.
-      // signAndEditExecutable: false
+      icon: 'icons/icon256.ico',
+      /*
+      Editing executable metadata makes Windows show "Min" instead of "Electron".
+      Set MIN_SKIP_WIN_EXE_METADATA_EDIT=1 to skip this when build environment
+      cannot extract winCodeSign (symlink privilege issue).
+      */
+      signAndEditExecutable: !skipWinExeMetadataEdit
     },
     mac: {
       icon: 'icons/icon.icns',
