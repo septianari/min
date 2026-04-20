@@ -100,6 +100,9 @@ module.exports = function (platform, extraOptions) {
     win: {
       target: 'dir',
       icon: 'icons/icon256.ico'
+      // Avoid winCodeSign extraction on environments without symlink privilege.
+      // This build path is for unsigned local artifacts.
+      // signAndEditExecutable: false
     },
     mac: {
       icon: 'icons/icon.icns',

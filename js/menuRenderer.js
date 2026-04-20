@@ -136,11 +136,11 @@ module.exports = {
     })
 
     ipc.on('goBack', function () {
-      webviews.callAsync(tabs.getSelected(), 'goBack')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goBack')
     })
 
     ipc.on('goForward', function () {
-      webviews.callAsync(tabs.getSelected(), 'goForward')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
     })
   }
 }

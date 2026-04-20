@@ -158,11 +158,11 @@ const defaultKeybindings = {
     })
 
     keybindings.defineShortcut('goBack', function (d) {
-      webviews.callAsync(tabs.getSelected(), 'goBack')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goBack')
     })
 
     keybindings.defineShortcut('goForward', function (d) {
-      webviews.callAsync(tabs.getSelected(), 'goForward')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
     })
 
     keybindings.defineShortcut('switchToPreviousTab', function (d) {

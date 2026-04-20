@@ -311,6 +311,38 @@ body.windows.dark-theme .navbar-action-button:not(:disabled):hover {
   font-size: 1.6em !important;
 }
 
+#windows-drag-button {
+  display: none;
+}
+
+body.windows:not(.separate-titlebar) #windows-drag-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-top: 1px;
+  margin-left: 0;
+  padding: 0;
+  border-radius: 4px;
+  color: currentColor;
+  opacity: 1;
+  vertical-align: top;
+  cursor: grab;
+  -webkit-app-region: drag;
+}
+
+body.windows:not(.separate-titlebar) #windows-drag-button:active {
+  cursor: grabbing;
+}
+
+body.windows:not(.separate-titlebar) #windows-drag-button svg {
+  width: 19px;
+  height: 19px;
+  transform: translateY(-0.5px);
+  fill: currentColor;
+}
+
 /* audio button */
 .tab-item .tab-audio-button {
   vertical-align: text-bottom;

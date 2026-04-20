@@ -262,7 +262,7 @@ const webviewMenu = {
         label: l('goForward'),
         click: function () {
           try {
-            webviews.callAsync(tabs.getSelected(), 'goForward')
+            webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
           } catch (e) { }
         }
       }

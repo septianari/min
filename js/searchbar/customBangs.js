@@ -110,7 +110,7 @@ function initialize () {
     snippet: l('goBack'),
     isAction: true,
     fn: function (text) {
-      webviews.callAsync(tabs.getSelected(), 'goBack')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goBack')
     }
   })
 
@@ -119,7 +119,7 @@ function initialize () {
     snippet: l('goForward'),
     isAction: true,
     fn: function (text) {
-      webviews.callAsync(tabs.getSelected(), 'goForward')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
     }
   })
 

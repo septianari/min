@@ -101,7 +101,7 @@ function onSwipeGestureLowVelocity () {
         if (beginningScrollRight < 5) {
           resetDistanceCounters()
           resetScrollCounters()
-          webviews.callAsync(tabs.getSelected(), 'goForward')
+          webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
         }
       }
 

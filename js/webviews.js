@@ -158,7 +158,7 @@ const webviews = {
         height: window.innerHeight
       }
     } else {
-      if (!hasSeparateTitlebar && (window.platformType === 'linux' || window.platformType === 'windows') && !windowIsMaximized && !windowIsFullscreen) {
+      if (!hasSeparateTitlebar && window.platformType === 'linux' && !windowIsMaximized && !windowIsFullscreen) {
         var navbarHeight = 48
       } else {
         var navbarHeight = 36
@@ -320,23 +320,37 @@ const webviews = {
   resize: function () {
     ipc.send('setBounds', { id: webviews.selectedId, bounds: webviews.getViewBounds() })
   },
-  goBackIgnoringRedirects: async function (id) {
-    const navHistory = await webviews.getNavigationHistory(id)
-    // If the current page is an internal page resulting from a redirect (error pages or reader mode), go back two pages
+  goBackIgnoringRedirects: function (id) {
+    webviews.getNavigationHistory(id).then(function (navHistory) {
+      if (!navHistory || !navHistory.entries || navHistory.activeIndex === undefined || navHistory.activeIndex < 0) {
+        webviews.callAsync(id, 'navigationHistory.goBack')
+        return
+      }
 
-    var url = navHistory.entries[navHistory.activeIndex].url
+      // If the current page is an internal page resulting from a redirect (error pages or reader mode), go back two pages
+      var currentEntry = navHistory.entries[navHistory.activeIndex]
+      var url = currentEntry && currentEntry.url
 
-    if (urlParser.isInternalURL(url) && navHistory.activeIndex > 1 && navHistory.entries[navHistory.activeIndex - 1].url === urlParser.getSourceURL(url)) {
-      webviews.callAsync(id, 'canGoToOffset', -2, function (err, result) {
-        if (!err && result === true) {
-          webviews.callAsync(id, 'goToOffset', -2)
-        } else {
-          webviews.callAsync(id, 'goBack')
-        }
-      })
-    } else {
-      webviews.callAsync(id, 'goBack')
-    }
+      if (!url) {
+        webviews.callAsync(id, 'navigationHistory.goBack')
+        return
+      }
+
+      if (urlParser.isInternalURL(url) && navHistory.activeIndex > 1 && navHistory.entries[navHistory.activeIndex - 1].url === urlParser.getSourceURL(url)) {
+        webviews.callAsync(id, 'canGoToOffset', -2, function (err, result) {
+          if (!err && result === true) {
+            webviews.callAsync(id, 'goToOffset', -2)
+          } else {
+            webviews.callAsync(id, 'navigationHistory.goBack')
+          }
+        })
+      } else {
+        webviews.callAsync(id, 'navigationHistory.goBack')
+      }
+    }).catch(function (e) {
+      console.warn('unable to access navigation history', e)
+      webviews.callAsync(id, 'navigationHistory.goBack')
+    })
   },
   /*
   Can be called as

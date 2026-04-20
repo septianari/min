@@ -11,22 +11,29 @@ var navigationButtons = {
       navigationButtons.forwardButton.disabled = true
       return
     }
-    webviews.callAsync(tabs.getSelected(), 'canGoBack', function (err, canGoBack) {
-      if (err) {
+    webviews.getNavigationHistory(tabs.getSelected()).then(function (navHistory) {
+      if (!navHistory || !navHistory.entries) {
+        navigationButtons.backButton.disabled = true
+        navigationButtons.forwardButton.disabled = true
+        navigationButtons.container.classList.remove('can-go-forward')
         return
       }
+
+      const canGoBack = navHistory.activeIndex > 0
+      const canGoForward = navHistory.activeIndex < navHistory.entries.length - 1
+
       navigationButtons.backButton.disabled = !canGoBack
-    })
-    webviews.callAsync(tabs.getSelected(), 'canGoForward', function (err, canGoForward) {
-      if (err) {
-        return
-      }
       navigationButtons.forwardButton.disabled = !canGoForward
+
       if (canGoForward) {
         navigationButtons.container.classList.add('can-go-forward')
       } else {
         navigationButtons.container.classList.remove('can-go-forward')
       }
+    }).catch(function () {
+      navigationButtons.backButton.disabled = true
+      navigationButtons.forwardButton.disabled = true
+      navigationButtons.container.classList.remove('can-go-forward')
     })
   },
   initialize: function () {
@@ -37,7 +44,7 @@ var navigationButtons = {
     })
 
     navigationButtons.forwardButton.addEventListener('click', function () {
-      webviews.callAsync(tabs.getSelected(), 'goForward')
+      webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
     })
 
     navigationButtons.container.addEventListener('mouseenter', function () {

@@ -9,7 +9,6 @@ body {
   display: none;
 }
 
-body.windows:not(.maximized):not(.fullscreen):not(.separate-titlebar),
 body.linux:not(.maximized):not(.fullscreen):not(.separate-titlebar) {
   --control-space-top: 12px;
 }

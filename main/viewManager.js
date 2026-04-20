@@ -388,14 +388,29 @@ ipc.on('callViewMethod', function (e, data) {
   var error, result
   try {
     var webContents = viewMap[data.id].webContents
-    var methodOrProp = webContents[data.method]
+    var target = webContents
+    var propertyName = data.method
+
+    if (typeof data.method === 'string' && data.method.includes('.')) {
+      const parts = data.method.split('.')
+      propertyName = parts.pop()
+      parts.forEach(function (part) {
+        target = target && target[part]
+      })
+    }
+
+    if (!target) {
+      throw new Error('invalid target for method: ' + data.method)
+    }
+
+    var methodOrProp = target[propertyName]
     if (methodOrProp instanceof Function) {
       // call function
-      result = methodOrProp.apply(webContents, data.args)
+      result = methodOrProp.apply(target, data.args)
     } else {
       // set property
       if (data.args && data.args.length > 0) {
-        webContents[data.method] = data.args[0]
+        target[propertyName] = data.args[0]
       }
       // read property
       result = methodOrProp
