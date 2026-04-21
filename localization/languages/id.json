@@ -236,6 +236,7 @@
     "appMenuViewGithub": "Lihat di GitHub",
     "appMenuAbout": "Tentang %n", //%n is replaced with app name
     "appMenuPreferences": "Preferensi",
+    "appMenuResetAlwaysOpenExternalApps": "Reset Selalu Buka Aplikasi Eksternal",
     "appMenuServices": "Servis",
     "appMenuHide": "Sembunyikan %n",
     "appMenuHideOthers": "Sembunyikan Lainnya",
@@ -308,7 +309,11 @@
     "email": "Email",
     "password": "Kata sandi",
     "secretKey": "Kunci rahasia",
-    "openExternalApp": "Buka dengan \\\"%s\\\"?", // %s is the name of an app
+    "openExternalApp": "Buka dengan \\\"%s\\\"?",
+    "alwaysOpenExternalApp": "Selalu buka dengan %s",
+    "externalProtocolAutoOpenResetPrompt": "Reset izin selalu buka aplikasi eksternal?",
+    "externalProtocolAutoOpenResetDetail": "Tautan eksternal seperti prindoc:// akan menampilkan dialog konfirmasi lagi.",
+    "externalProtocolAutoOpenResetDone": "Izin selalu buka aplikasi eksternal sudah direset.",
     "clickToCopy": "Klik untuk salin",
     "copied": "Tersalin"
   }

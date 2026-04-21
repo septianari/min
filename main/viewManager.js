@@ -5,6 +5,78 @@ var temporaryPopupViews = {} // id: view
 
 // rate limit on "open in app" requests
 var globalLaunchRequests = 0
+var externalProtocolAutoOpenSetting = 'externalProtocolAutoOpen'
+
+function getURLOriginIfWeb (url) {
+  if (!url) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.origin
+    }
+  } catch (e) {}
+
+  return null
+}
+
+function getProtocolName (url) {
+  try {
+    return new URL(url).protocol.replace(':', '').toLowerCase()
+  } catch (e) {
+    return (url.split(':')[0] || '').toLowerCase()
+  }
+}
+
+function getExternalProtocolSourceURL (event, targetURL, webContents) {
+  const senderFrameURL = event?.senderFrame?.url
+  if (senderFrameURL && senderFrameURL !== targetURL) {
+    return senderFrameURL
+  }
+
+  const currentURL = webContents?.getURL()
+  if (currentURL && currentURL !== targetURL) {
+    return currentURL
+  }
+
+  return ''
+}
+
+function getExternalProtocolPreferenceKey (sourceURL, targetURL) {
+  const protocolName = getProtocolName(targetURL)
+  const sourceOrigin = getURLOriginIfWeb(sourceURL)
+
+  if (sourceOrigin) {
+    return sourceOrigin + '|' + protocolName
+  }
+
+  return '*|' + protocolName
+}
+
+function shouldAutoOpenExternalProtocol (sourceURL, targetURL) {
+  const autoOpenSettings = settings.get(externalProtocolAutoOpenSetting) || {}
+  const key = getExternalProtocolPreferenceKey(sourceURL, targetURL)
+  const wildcardKey = '*|' + getProtocolName(targetURL)
+
+  return autoOpenSettings[key] === true || autoOpenSettings[wildcardKey] === true
+}
+
+function saveAutoOpenExternalProtocolPreference (sourceURL, targetURL) {
+  const key = getExternalProtocolPreferenceKey(sourceURL, targetURL)
+  const current = settings.get(externalProtocolAutoOpenSetting) || {}
+
+  settings.set(externalProtocolAutoOpenSetting, Object.assign({}, current, {
+    [key]: true
+  }))
+}
+
+function formatExternalAppPromptText (stringId, fallbackTemplate, appName) {
+  const localizedValue = l(stringId)
+  const safeTemplate = typeof localizedValue === 'string' ? localizedValue : fallbackTemplate
+  return safeTemplate.replace('%s', appName).replace(/\\/g, '')
+}
 
 function getDefaultViewWebPreferences () {
   return (
@@ -198,24 +270,42 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
   function handleExternalProtocol (e, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) {
     var knownProtocols = ['http', 'https', 'file', 'min', 'about', 'data', 'javascript', 'chrome'] // TODO anything else?
     if (!knownProtocols.includes(url.split(':')[0])) {
+      if (e && e.preventDefault) {
+        e.preventDefault()
+      }
+
       var externalApp = app.getApplicationNameForProtocol(url)
       if (externalApp) {
+        const sourceURL = getExternalProtocolSourceURL(e, url, view.webContents)
+        if (shouldAutoOpenExternalProtocol(sourceURL, url)) {
+          electron.shell.openExternal(url)
+          return
+        }
+
         var sanitizedName = externalApp.replace(/[^a-zA-Z0-9.]/g, '')
         if (globalLaunchRequests < 2) {
           globalLaunchRequests++
           setTimeout(function () {
             globalLaunchRequests--
           }, 20000)
-          var result = electron.dialog.showMessageBoxSync({
+
+          electron.dialog.showMessageBox({
             type: 'question',
             buttons: ['OK', 'Cancel'],
-            message: l('openExternalApp').replace('%s', sanitizedName).replace(/\\/g, ''),
-            detail: url.length > 160 ? url.substring(0, 160) + '...' : url
+            defaultId: 0,
+            cancelId: 1,
+            message: formatExternalAppPromptText('openExternalApp', 'Open in "%s"?', sanitizedName),
+            detail: url.length > 160 ? url.substring(0, 160) + '...' : url,
+            checkboxLabel: formatExternalAppPromptText('alwaysOpenExternalApp', 'Always open in "%s"', sanitizedName),
+            checkboxChecked: false
+          }).then(function (result) {
+            if (result.response === 0) {
+              if (result.checkboxChecked) {
+                saveAutoOpenExternalProtocolPreference(sourceURL, url)
+              }
+              electron.shell.openExternal(url)
+            }
           })
-
-          if (result === 0) {
-            electron.shell.openExternal(url)
-          }
         }
       }
     }

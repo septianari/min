@@ -1,5 +1,9 @@
 function buildAppMenu (options = {}) {
   const keyMap = userKeyMap(settings.get('keyMap'))
+  function getLocalizedMenuLabel (stringId, fallback) {
+    const localizedValue = l(stringId)
+    return typeof localizedValue === 'string' ? localizedValue : fallback
+  }
 
   function getFormattedKeyMapEntry (keybinding) {
     const value = keyMap[keybinding]
@@ -90,11 +94,37 @@ function buildAppMenu (options = {}) {
   }
 
   var preferencesAction = {
-    label: l('appMenuPreferences'),
+    label: getLocalizedMenuLabel('appMenuPreferences', 'Preferences'),
     accelerator: 'CmdOrCtrl+,',
     click: function (item, window) {
       sendIPCToWindow(window, 'addTab', {
         url: 'min://app/pages/settings/index.html'
+      })
+    }
+  }
+
+  var resetAlwaysOpenExternalAppsAction = {
+    label: getLocalizedMenuLabel('appMenuResetAlwaysOpenExternalApps', 'Reset Always Open External Apps'),
+    click: function () {
+      const result = electron.dialog.showMessageBoxSync({
+        type: 'question',
+        buttons: [l('dialogConfirmButton'), l('dialogSkipButton')],
+        defaultId: 0,
+        cancelId: 1,
+        message: getLocalizedMenuLabel('externalProtocolAutoOpenResetPrompt', 'Reset always-open external app permissions?'),
+        detail: getLocalizedMenuLabel('externalProtocolAutoOpenResetDetail', 'External links like prindoc:// will show the confirmation dialog again.')
+      })
+
+      if (result !== 0) {
+        return
+      }
+
+      settings.set('externalProtocolAutoOpen', {})
+
+      electron.dialog.showMessageBox({
+        type: 'info',
+        buttons: [l('closeDialog')],
+        message: getLocalizedMenuLabel('externalProtocolAutoOpenResetDone', 'Always-open external app permissions have been reset.')
       })
     }
   }
@@ -105,6 +135,7 @@ function buildAppMenu (options = {}) {
     ...(options.secondary ? personalDataItems : []),
     ...(options.secondary ? [{ type: 'separator' }] : []),
     ...(options.secondary ? [preferencesAction] : []),
+    ...(options.secondary ? [resetAlwaysOpenExternalAppsAction] : []),
     ...(options.secondary ? [{ type: 'separator' }] : []),
     ...(process.platform === 'darwin'
       ? [
@@ -119,6 +150,7 @@ function buildAppMenu (options = {}) {
               type: 'separator'
             },
             preferencesAction,
+            resetAlwaysOpenExternalAppsAction,
             {
               label: 'Services',
               role: 'services',
@@ -226,7 +258,8 @@ function buildAppMenu (options = {}) {
           }
         },
         ...(!options.secondary && process.platform !== 'darwin' ? [{ type: 'separator' }] : []),
-        ...(!options.secondary && process.platform !== 'darwin' ? [preferencesAction] : [])
+        ...(!options.secondary && process.platform !== 'darwin' ? [preferencesAction] : []),
+        ...(!options.secondary && process.platform !== 'darwin' ? [resetAlwaysOpenExternalAppsAction] : [])
       ]
     },
     {
