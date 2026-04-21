@@ -78,6 +78,17 @@ function formatExternalAppPromptText (stringId, fallbackTemplate, appName) {
   return safeTemplate.replace('%s', appName).replace(/\\/g, '')
 }
 
+function getExternalProtocolSourceDisplay (sourceURL) {
+  try {
+    const parsed = new URL(sourceURL)
+    if (parsed.hostname) {
+      return '"' + parsed.hostname + '"'
+    }
+  } catch (e) {}
+
+  return '"This page"'
+}
+
 function getDefaultViewWebPreferences () {
   return (
     {
@@ -289,20 +300,26 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
             globalLaunchRequests--
           }, 20000)
 
+          const sourceDisplay = getExternalProtocolSourceDisplay(sourceURL)
+          const localizedPrompt = l('externalProtocolWantsToOpen')
+          const promptTemplate = typeof localizedPrompt === 'string' ? localizedPrompt : '%h wants to open "%s".'
+
           electron.dialog.showMessageBox({
             type: 'question',
-            buttons: ['OK', 'Cancel'],
+            buttons: [
+              formatExternalAppPromptText('externalProtocolOpenApp', 'Open "%s"', sanitizedName),
+              formatExternalAppPromptText('externalProtocolAlwaysOpenApp', 'Always open "%s"', sanitizedName),
+              l('dialogSkipButton') || 'Cancel'
+            ],
             defaultId: 0,
-            cancelId: 1,
-            message: formatExternalAppPromptText('openExternalApp', 'Open in "%s"?', sanitizedName),
-            detail: url.length > 160 ? url.substring(0, 160) + '...' : url,
-            checkboxLabel: formatExternalAppPromptText('alwaysOpenExternalApp', 'Always open in "%s"', sanitizedName),
-            checkboxChecked: false
+            cancelId: 2,
+            message: promptTemplate.replace('%h', sourceDisplay).replace('%s', sanitizedName)
           }).then(function (result) {
-            if (result.response === 0) {
-              if (result.checkboxChecked) {
-                saveAutoOpenExternalProtocolPreference(sourceURL, url)
-              }
+            if (result.response === 1) {
+              saveAutoOpenExternalProtocolPreference(sourceURL, url)
+            }
+
+            if (result.response === 0 || result.response === 1) {
               electron.shell.openExternal(url)
             }
           })

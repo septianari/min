@@ -63,6 +63,19 @@ input:hover[type="button"] {
   width: 100%;
 }
 
+.prompt-checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+}
+
+.prompt-checkbox-row input[type="checkbox"] {
+  margin: 0;
+}
+
 #data {
   width: 100%;
   left: 0;
