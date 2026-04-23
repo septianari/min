@@ -128,7 +128,7 @@ function isLowContrast (color) {
 function adjustColorForTheme (color) {
   // dim the colors late at night or early in the morning if automatic dark mode is enabled
   const darkMode = settings.get('darkMode')
-  const isAuto = (darkMode === undefined || darkMode === true || darkMode >= 0)
+  const isAuto = (darkMode === undefined || darkMode === 2 || darkMode === 0 || darkMode === true)
 
   let colorChange = 1
   if (isAuto) {
@@ -139,7 +139,9 @@ function adjustColorForTheme (color) {
     }
   }
 
-  if (window.isDarkMode) {
+  if (window.isUltraDarkMode) {
+    colorChange = Math.min(colorChange, 0.3)
+  } else if (window.isDarkMode) {
     colorChange = Math.min(colorChange, 0.6)
   }
 
@@ -261,6 +263,7 @@ const tabColor = {
 
     // theme changes can affect the tab colors
     window.addEventListener('themechange', function (e) {
+      tabColor.refreshColors()
       tabColor.updateColors()
     })
 
@@ -271,6 +274,29 @@ const tabColor = {
     })
 
     tasks.on('tab-selected', this.updateColors)
+  },
+  refreshColors: function () {
+    if (typeof tasks === 'undefined' || !tasks) {
+      return
+    }
+    tasks.forEach(function (task) {
+      task.tabs.forEach(function (tab) {
+        if (tab.themeColor && tab.themeColor.originalColor) {
+          tabColor.updateFromThemeColor(tab.themeColor.originalColor, tab.id)
+        }
+        if (tab.backgroundColor && tab.backgroundColor.originalColor) {
+          const backgroundColorAdjusted = adjustColorForTheme(tab.backgroundColor.originalColor)
+          tabs.update(tab.id, {
+            backgroundColor: {
+              color: getRGBString(backgroundColorAdjusted),
+              textColor: getTextColor(backgroundColorAdjusted),
+              isLowContrast: isLowContrast(backgroundColorAdjusted),
+              originalColor: tab.backgroundColor.originalColor
+            }
+          })
+        }
+      })
+    })
   },
   updateFromThemeColor: function (color, tabId) {
     if (!color) {
@@ -287,7 +313,8 @@ const tabColor = {
       themeColor: {
         color: getRGBString(rgbAdjusted),
         textColor: getTextColor(rgbAdjusted),
-        isLowContrast: isLowContrast(rgbAdjusted)
+        isLowContrast: isLowContrast(rgbAdjusted),
+        originalColor: color
       }
     })
   },
@@ -306,7 +333,8 @@ const tabColor = {
           backgroundColor: {
             color: getRGBString(backgroundColorAdjusted),
             textColor: getTextColor(backgroundColorAdjusted),
-            isLowContrast: isLowContrast(backgroundColorAdjusted)
+            isLowContrast: isLowContrast(backgroundColorAdjusted),
+            originalColor: backgroundColor
           },
           favicon: {
             url: favicons[0],
@@ -324,6 +352,9 @@ const tabColor = {
     })
   },
   updateColors: function () {
+    if (typeof tabs === 'undefined' || !tabs || !tabs.getSelected()) {
+      return
+    }
     const tab = tabs.get(tabs.getSelected())
 
     // private tabs have their own color scheme
