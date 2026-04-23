@@ -4,12 +4,50 @@
     <meta charset="UTF-8" />
 
     <link rel="stylesheet" href="../pagebase.css" />
+    <style>
+      #ssl-advanced {
+        margin-top: 1.25em;
+        clear: both;
+      }
+
+      #advanced-button.secondary-button {
+        float: none;
+        display: inline-block;
+      }
+
+      #advanced-content {
+        margin-top: 0.75em;
+        font-size: 0.95em;
+        line-height: 1.4;
+        opacity: 0.9;
+      }
+
+      #ssl-code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        opacity: 0.85;
+        margin: 0 0 0.5em 0;
+      }
+
+      #ssl-detail {
+        margin: 0 0 0.75em 0;
+      }
+    </style>
   </head>
 
   <body>
     <div id="page-wrapper">
       <h1 id="error-name"></h1>
       <h2 id="error-desc"></h2>
+
+      <div id="ssl-advanced" hidden>
+        <button id="advanced-button" class="secondary-button" type="button"></button>
+        <div id="advanced-content" hidden>
+          <p id="ssl-code"></p>
+          <p id="ssl-detail"></p>
+          <a id="proceed-link" href="#"></a>
+        </div>
+      </div>
 
       <button id="secondary-button" class="secondary-button" hidden></button>
       <button

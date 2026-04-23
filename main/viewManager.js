@@ -3,9 +3,46 @@ var viewStateMap = {} // id: view state
 
 var temporaryPopupViews = {} // id: view
 
+// per-session allowlist of HTTPS origins that the user explicitly chose to bypass certificate errors for
+var insecureCertAllowlist = new WeakMap() // Session -> Set(origin)
+
 // rate limit on "open in app" requests
 var globalLaunchRequests = 0
 var externalProtocolAutoOpenSetting = 'externalProtocolAutoOpen'
+
+function getHTTPSOrigin (url) {
+  if (!url) {
+    return null
+  }
+
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') {
+      return null
+    }
+    return parsed.origin
+  } catch (e) {
+    return null
+  }
+}
+
+function getAllowlistForSession (ses) {
+  if (!ses) {
+    return null
+  }
+
+  let set = insecureCertAllowlist.get(ses)
+  if (!set) {
+    set = new Set()
+    insecureCertAllowlist.set(ses, set)
+  }
+  return set
+}
+
+function isOriginAllowedForSession (ses, origin) {
+  const set = insecureCertAllowlist.get(ses)
+  return !!(set && set.has(origin))
+}
 
 function getURLOriginIfWeb (url) {
   if (!url) {
@@ -462,6 +499,46 @@ function getWindowFromViewContents (webContents) {
   const viewId = Object.keys(viewMap).find(id => viewMap[id].webContents === webContents)
   return windows.getAll().find(win => windows.getState(win).selectedView === viewId)
 }
+
+// Allow user to proceed past invalid/unknown TLS certs for a specific origin (Chrome-style "Proceed (unsafe)").
+app.on('certificate-error', function (event, contents, url, error, certificate, callback) {
+  const origin = getHTTPSOrigin(url)
+
+  // Default: block. If the user explicitly allowed this origin for this session, proceed.
+  const allowed = !!(origin && contents?.session && isOriginAllowedForSession(contents.session, origin))
+
+  event.preventDefault()
+  callback(allowed)
+})
+
+ipc.on('proceedInsecure', function (e, data) {
+  // Only allow requests coming from internal pages.
+  const senderURL = e?.senderFrame?.url || ''
+  if (!senderURL.startsWith('min://')) {
+    return
+  }
+
+  const targetURL = data && (data.url || data)
+  const origin = getHTTPSOrigin(targetURL)
+  if (!origin) {
+    return
+  }
+
+  const ses = e.sender?.session
+  const allowSet = getAllowlistForSession(ses)
+  if (!allowSet) {
+    return
+  }
+  allowSet.add(origin)
+
+  const tabId = getTabIDFromWebContents(e.sender)
+  if (!tabId || !viewMap[tabId]) {
+    return
+  }
+
+  const win = getWindowFromViewContents(e.sender)
+  loadURLInView(tabId, targetURL, win)
+})
 
 ipc.on('createView', function (e, args) {
   createView(args.existingViewId, args.id, args.webPreferences, args.boundsString, args.events)

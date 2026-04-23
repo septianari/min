@@ -4,16 +4,25 @@ var h1 = document.getElementById('error-name')
 var h2 = document.getElementById('error-desc')
 var primaryButton = document.getElementById('primary-button')
 var secondaryButton = document.getElementById('secondary-button')
+var sslAdvancedWrap = document.getElementById('ssl-advanced')
+var advancedButton = document.getElementById('advanced-button')
+var advancedContent = document.getElementById('advanced-content')
+var sslCodeEl = document.getElementById('ssl-code')
+var sslDetailEl = document.getElementById('ssl-detail')
+var proceedLink = document.getElementById('proceed-link')
 
 var ec = searchParams.get('ec')
 var url = searchParams.get('url')
+
+var originalURL = url
+var retryURL = url
 
 function retry () {
   // make the page blank while the replacement page is loading, so it doesn't look like the error condition still exists
   document.body.innerHTML = ''
   document.body.style.backgroundColor = '#fff'
 
-  window.location = url
+  window.location = retryURL
 }
 
 var websiteNotFound = {
@@ -305,6 +314,23 @@ const erorDescriptions = {
   '-806': dnsError
 }
 
+function getHostDisplay (inputURL) {
+  try {
+    var u = new URL(inputURL)
+    // include port when present
+    return u.port ? (u.hostname + ':' + u.port) : u.hostname
+  } catch (e) {
+    return ''
+  }
+}
+
+function isCertificateErrorCode (code) {
+  // net error list includes CERT_* errors in the -200 range
+  // https://source.chromium.org/chromium/chromium/src/+/master:net/base/net_error_list.h
+  var n = parseInt(code, 10)
+  return (n <= -200 && n >= -219) || n === -501
+}
+
 // show the error message and detail
 
 var errDesc = erorDescriptions[ec]
@@ -340,10 +366,64 @@ if (errDesc && errDesc.secondaryAction) {
 // if an ssl error occured, "try again" should go to the http:// version, which might work
 
 if (erorDescriptions[ec] === sslError) {
-  url = url.replace('https://', 'http://')
+  retryURL = retryURL && retryURL.replace('https://', 'http://')
 }
 
-if (url) {
+// show "Advanced" + "Proceed (unsafe)" for certificate errors (ex: ERR_CERT_AUTHORITY_INVALID)
+if (originalURL && isCertificateErrorCode(ec)) {
+  sslAdvancedWrap.hidden = false
+
+  var hostDisplay = getHostDisplay(originalURL)
+  var errorName = errorCodes[ec] || ''
+  var netErr = errorName ? ('NET::ERR_' + errorName) : ''
+
+  if (netErr) {
+    sslCodeEl.hidden = false
+    sslCodeEl.textContent = netErr
+  } else {
+    sslCodeEl.hidden = true
+  }
+
+  var advancedText = l('sslAdvancedText')
+  if (typeof advancedText !== 'string') {
+    advancedText = "This server could not prove that it is %h; its security certificate is not trusted by your computer's operating system. This may be caused by a misconfiguration or an attacker intercepting your connection."
+  }
+  sslDetailEl.textContent = advancedText.replace('%h', hostDisplay)
+
+  var proceedText = l('sslProceedUnsafe')
+  if (typeof proceedText !== 'string') {
+    proceedText = 'Proceed to %h (unsafe)'
+  }
+  proceedLink.textContent = proceedText.replace('%h', hostDisplay)
+
+  var showLabel = l('sslAdvancedShow')
+  if (typeof showLabel !== 'string') {
+    showLabel = 'Advanced'
+  }
+  var hideLabel = l('sslAdvancedHide')
+  if (typeof hideLabel !== 'string') {
+    hideLabel = 'Hide advanced'
+  }
+
+  advancedButton.textContent = showLabel
+  advancedButton.addEventListener('click', function () {
+    var nowHidden = !advancedContent.hidden
+    advancedContent.hidden = nowHidden
+    advancedButton.textContent = nowHidden ? showLabel : hideLabel
+  })
+
+  proceedLink.addEventListener('click', function (e) {
+    e.preventDefault()
+
+    // Ask the preload to request a one-time certificate bypass for this origin, then reload the original URL.
+    window.postMessage({ message: 'proceedInsecure', url: originalURL }, '*')
+
+    document.body.innerHTML = ''
+    document.body.style.backgroundColor = '#fff'
+  })
+}
+
+if (retryURL) {
   primaryButton.addEventListener('click', function () {
     retry()
   })
