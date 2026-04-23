@@ -18,7 +18,7 @@ function themeSettingsChanged (value) {
   clearInterval(themeInterval)
 
   // 1 or true: dark mode is always enabled
-  if (value === 1 || value === true) {
+  if (value === 1 || value === true || value === 3) {
     nativeTheme.themeSource = 'dark'
     return
   }
@@ -53,6 +53,16 @@ app.on('ready', function () {
   if (settings.get('darkThemeIsActive') !== nativeTheme.shouldUseDarkColors) {
     settings.set('darkThemeIsActive', nativeTheme.shouldUseDarkColors)
   }
+
+  function updateUltraDarkMode () {
+    const isUltra = settings.get('darkMode') === 3
+    if (settings.get('ultraDarkThemeIsActive') !== isUltra) {
+      settings.set('ultraDarkThemeIsActive', isUltra)
+    }
+  }
+
+  updateUltraDarkMode()
+  settings.listen('darkMode', updateUltraDarkMode)
 
   nativeTheme.on('updated', function () {
     settings.set('darkThemeIsActive', nativeTheme.shouldUseDarkColors)

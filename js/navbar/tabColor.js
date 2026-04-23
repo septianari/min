@@ -11,7 +11,8 @@ const textColorNN = require('ext/textColor/textColor.js')
 const defaultColors = {
   private: ['rgb(58, 44, 99)', 'white'],
   lightMode: ['rgb(255, 255, 255)', 'black'],
-  darkMode: ['rgb(33, 37, 43)', 'white']
+  darkMode: ['rgb(33, 37, 43)', 'white'],
+  ultraDarkMode: ['#020408', 'white']
 }
 
 function getHours () {
@@ -305,6 +306,9 @@ const tabColor = {
     }
 
     // otherwise use the default colors
+    if (window.isUltraDarkMode) {
+      return setColor(defaultColors.ultraDarkMode[0], defaultColors.ultraDarkMode[1])
+    }
     if (window.isDarkMode) {
       return setColor(defaultColors.darkMode[0], defaultColors.darkMode[1])
     }

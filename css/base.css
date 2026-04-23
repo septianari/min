@@ -42,6 +42,11 @@ body.dark-mode {
   color: lightgrey;
 }
 
+body.ultra-dark-mode {
+  background-color: #020408;
+  color: #e0e0e0;
+}
+
 h1,
 h2,
 h3 {
@@ -89,6 +94,13 @@ a {
 .dark-mode input,
 .dark-mode textarea {
   background-color: rgb(52, 58, 68);
+  color: white;
+  border-color: transparent;
+}
+
+.ultra-dark-mode input,
+.ultra-dark-mode textarea {
+  background-color: #1a1b1e;
   color: white;
   border-color: transparent;
 }

@@ -186,13 +186,15 @@ for (var contentType in contentTypes) {
 var darkModeNever = document.getElementById('dark-mode-never')
 var darkModeNight = document.getElementById('dark-mode-night')
 var darkModeAlways = document.getElementById('dark-mode-always')
+var darkModeUltra = document.getElementById('dark-mode-ultra')
 var darkModeSystem = document.getElementById('dark-mode-system')
 
-// -1 - off ; 0 - auto ; 1 - on
+// -1 - off ; 0 - auto ; 1 - on ; 3 - ultra
 settings.get('darkMode', function (value) {
   darkModeNever.checked = (value === -1)
   darkModeNight.checked = (value === 0)
   darkModeAlways.checked = (value === 1 || value === true)
+  darkModeUltra.checked = (value === 3)
   darkModeSystem.checked = (value === 2 || value === undefined || value === false)
 })
 
@@ -209,6 +211,11 @@ darkModeNight.addEventListener('change', function (e) {
 darkModeAlways.addEventListener('change', function (e) {
   if (this.checked) {
     settings.set('darkMode', 1)
+  }
+})
+darkModeUltra.addEventListener('change', function (e) {
+  if (this.checked) {
+    settings.set('darkMode', 3)
   }
 })
 darkModeSystem.addEventListener('change', function (e) {
