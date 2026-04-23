@@ -1,5 +1,6 @@
 var webviews = require('webviews.js')
 var settings = require('util/settings/settings.js')
+var urlParser = require('util/urlParser.js')
 
 const colorExtractorImage = document.createElement('img')
 colorExtractorImage.crossOrigin = 'anonymous'
@@ -154,6 +155,21 @@ function getLuminance (c) {
   return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]
 }
 
+function getOrigin (url) {
+  if (!url) {
+    return null
+  }
+  try {
+    return new URL(url).origin
+  } catch (e) {
+    return null
+  }
+}
+
+// Track the last "effective" URL for each tab. We can't rely on tabs.get(tabId).url inside
+// did-start-navigation because webviews.js updates it first.
+const lastEffectiveURL = {}
+
 function setColor (bg, fg, isLowContrast) {
   document.body.style.setProperty('--theme-background-color', bg)
   document.body.style.setProperty('--theme-foreground-color', fg)
@@ -206,18 +222,31 @@ const tabColor = {
      */
     webviews.bindEvent('did-start-navigation', function (tabId, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) {
       if (isMainFrame) {
-        const oldTab = tabs.get(tabId)
-        try {
-          if (oldTab && oldTab.url && new URL(oldTab.url).origin === new URL(url).origin) {
-            return
-          }
-        } catch (e) {}
+        const effectiveURL = urlParser.getSourceURL(url)
+        const previousURL = lastEffectiveURL[tabId]
+        const isErrorPage = webviews.internalPages?.error && url.startsWith(webviews.internalPages.error)
+
+        // Always reset for internal error page so it can't inherit the last site's theme.
+        // Otherwise, reset when the origin changes.
+        const shouldReset = isErrorPage || getOrigin(previousURL) !== getOrigin(effectiveURL)
+
+        lastEffectiveURL[tabId] = effectiveURL
+
+        if (!shouldReset) {
+          return
+        }
 
         tabs.update(tabId, {
           backgroundColor: null,
+          themeColor: null,
           favicon: null
         })
       }
+    })
+
+    // Keep lastEffectiveURL in sync for cases where did-start-navigation isn't emitted (edge cases).
+    webviews.bindEvent('did-navigate', function (tabId, url) {
+      lastEffectiveURL[tabId] = urlParser.getSourceURL(url)
     })
 
     /*
