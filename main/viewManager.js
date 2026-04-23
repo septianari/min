@@ -113,8 +113,9 @@ function getDefaultViewWebPreferences () {
 }
 
 function createView (existingViewId, id, webPreferences, boundsString, events) {
-  if (viewStateMap[id]) {
-    console.warn("Creating duplicate view")
+  if (viewMap[id]) {
+    console.warn("View already exists for " + id)
+    return viewMap[id]
   }
 
   const viewPrefs = Object.assign({}, getDefaultViewWebPreferences(), webPreferences)
@@ -136,7 +137,13 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
     view = new WebContentsView({ webPreferences: viewPrefs })
   }
 
-  events.forEach(function (event) {
+  // fix for MaxListenersExceededWarning
+  view.webContents.setMaxListeners(20)
+
+  // ensure events are unique
+  const uniqueEvents = Array.from(new Set(events))
+
+  uniqueEvents.forEach(function (event) {
     view.webContents.on(event, function (e) {
       var args = Array.prototype.slice.call(arguments).slice(1)
 
@@ -607,6 +614,8 @@ ipc.on('getCapture', function (e, data) {
     }
     const resized = img.resize({ width: data.width, height: data.height, quality: 'best' })
     e.sender.send('captureData', { id: data.id, url: resized.toDataURL() })
+  }).catch(function (err) {
+    console.warn('capturePage failed', err)
   })
 })
 
@@ -633,6 +642,8 @@ ipc.on('saveViewCapture', function (e, data) {
     height: Math.round(bounds.height * scaleFactor)
   }).then(function (image) {
     view.webContents.downloadURL(image.toDataURL())
+  }).catch(function (err) {
+    console.warn('saveViewCapture failed', err)
   })
 })
 
