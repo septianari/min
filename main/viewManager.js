@@ -587,13 +587,26 @@ ipc.on('getCapture', function (e, data) {
     return
   }
 
-  view.webContents.capturePage().then(function (img) {
-    var size = img.getSize()
-    if (size.width === 0 && size.height === 0) {
+  const bounds = view.getBounds()
+  const win = getWindowFromViewContents(view.webContents)
+  let scaleFactor = 1
+  if (win) {
+    scaleFactor = electron.screen.getDisplayMatching(win.getBounds()).scaleFactor
+  } else {
+    scaleFactor = electron.screen.getPrimaryDisplay().scaleFactor
+  }
+
+  view.webContents.capturePage({
+    x: 0,
+    y: 0,
+    width: Math.round(bounds.width * scaleFactor),
+    height: Math.round(bounds.height * scaleFactor)
+  }).then(function (img) {
+    if (img.isEmpty()) {
       return
     }
-    img = img.resize({ width: data.width, height: data.height })
-    e.sender.send('captureData', { id: data.id, url: img.toDataURL() })
+    const resized = img.resize({ width: data.width, height: data.height, quality: 'best' })
+    e.sender.send('captureData', { id: data.id, url: resized.toDataURL() })
   })
 })
 
@@ -601,9 +614,24 @@ ipc.on('saveViewCapture', function (e, data) {
   var view = viewMap[data.id]
   if (!view) {
     // view could have been destroyed
+    return
   }
 
-  view.webContents.capturePage().then(function (image) {
+  const bounds = view.getBounds()
+  const win = getWindowFromViewContents(view.webContents)
+  let scaleFactor = 1
+  if (win) {
+    scaleFactor = electron.screen.getDisplayMatching(win.getBounds()).scaleFactor
+  } else {
+    scaleFactor = electron.screen.getPrimaryDisplay().scaleFactor
+  }
+
+  view.webContents.capturePage({
+    x: 0,
+    y: 0,
+    width: Math.round(bounds.width * scaleFactor),
+    height: Math.round(bounds.height * scaleFactor)
+  }).then(function (image) {
     view.webContents.downloadURL(image.toDataURL())
   })
 })
