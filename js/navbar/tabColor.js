@@ -206,6 +206,13 @@ const tabColor = {
      */
     webviews.bindEvent('did-start-navigation', function (tabId, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) {
       if (isMainFrame) {
+        const oldTab = tabs.get(tabId)
+        try {
+          if (oldTab && oldTab.url && new URL(oldTab.url).origin === new URL(url).origin) {
+            return
+          }
+        } catch (e) {}
+
         tabs.update(tabId, {
           backgroundColor: null,
           favicon: null
@@ -218,7 +225,9 @@ const tabColor = {
     this is needed to go back to default colors in case this page doesn't specify one
      */
     webviews.bindEvent('did-finish-load', function (tabId) {
-      tabColor.updateColors()
+      setTimeout(function () {
+        tabColor.updateColors()
+      }, 200)
     })
 
     // theme changes can affect the tab colors
