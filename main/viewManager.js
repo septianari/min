@@ -687,12 +687,14 @@ ipc.on('getCapture', function (e, data) {
     height: Math.round(bounds.height * scaleFactor)
   }).then(function (img) {
     if (img.isEmpty()) {
+      e.sender.send('captureDataFailed', data.id)
       return
     }
     const resized = img.resize({ width: data.width, height: data.height, quality: 'best' })
     e.sender.send('captureData', { id: data.id, url: resized.toDataURL() })
   }).catch(function (err) {
     console.warn('capturePage failed', err)
+    e.sender.send('captureDataFailed', data.id)
   })
 })
 

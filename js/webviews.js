@@ -8,20 +8,35 @@ var placeholderImg = document.getElementById('webview-placeholder')
 var hasSeparateTitlebar = settings.get('useSeparateTitlebar')
 var windowIsMaximized = false // affects navbar height on Windows
 var windowIsFullscreen = false
+var previewCaptureMinimumInterval = 5000
 
-function captureCurrentTab (options) {
-  if (tabs.get(tabs.getSelected()).private) {
+function captureCurrentTab (options = {}) {
+  var tabId = options.tabId || webviews.selectedId || tabs.getSelected()
+  var tab = tabs.get(tabId)
+
+  if (!tab || tab.private) {
     // don't capture placeholders for private tabs
     return
   }
 
-  if (webviews.placeholderRequests.length > 0 && !(options && options.forceCapture === true)) {
+  if (webviews.captureInProgress[tabId]) {
+    return
+  }
+
+  if (webviews.placeholderRequests.length > 0 && options.forceCapture !== true) {
     // capturePage doesn't work while the view is hidden
     return
   }
 
+  const lastCapture = webviews.lastCaptureTimes[tabId] || 0
+  if (options.forceCapture !== true && Date.now() - lastCapture < previewCaptureMinimumInterval) {
+    return
+  }
+
+  webviews.captureInProgress[tabId] = true
+
   ipc.send('getCapture', {
-    id: webviews.selectedId,
+    id: tabId,
     width: Math.round(window.innerWidth / 10),
     height: Math.round(window.innerHeight / 10)
   })
@@ -102,6 +117,8 @@ const webviews = {
   viewFullscreenMap: {}, // tabId, isFullscreen
   selectedId: null,
   placeholderRequests: [],
+  captureInProgress: {},
+  lastCaptureTimes: {},
   asyncCallbacks: {},
   internalPages: {
     error: 'min://app/pages/error/index.html'
@@ -218,6 +235,10 @@ const webviews = {
     })
   },
   setSelected: function (id, options) { // options.focus - whether to focus the view. Defaults to true.
+    if (webviews.selectedId && webviews.selectedId !== id) {
+      captureCurrentTab({ tabId: webviews.selectedId })
+    }
+
     webviews.emitEvent('view-hidden', webviews.selectedId)
 
     webviews.selectedId = id
@@ -255,6 +276,8 @@ const webviews = {
     ipc.send('destroyView', id)
 
     delete webviews.viewFullscreenMap[id]
+    delete webviews.captureInProgress[id]
+    delete webviews.lastCaptureTimes[id]
     if (webviews.selectedId === id) {
       webviews.selectedId = null
     }
@@ -524,16 +547,18 @@ ipc.on('view-ipc', function (e, args) {
   })
 })
 
-setInterval(function () {
-  captureCurrentTab()
-}, 15000)
-
 ipc.on('captureData', function (e, data) {
+  webviews.captureInProgress[data.id] = false
+  webviews.lastCaptureTimes[data.id] = Date.now()
   tabs.update(data.id, { previewImage: data.url })
   if (data.id === webviews.selectedId && webviews.placeholderRequests.length > 0) {
     placeholderImg.src = data.url
     placeholderImg.hidden = false
   }
+})
+
+ipc.on('captureDataFailed', function (e, id) {
+  webviews.captureInProgress[id] = false
 })
 
 /* focus the view when the window is focused */
