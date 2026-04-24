@@ -5,6 +5,10 @@ const stemmer = require('stemmer')
 const whitespaceRegex = /\s+/g
 
 const ignoredCharactersRegex = /[']+/g
+const maxDocumentsToRank = 120
+const maxDocumentsToFullyProcess = 250
+const maxDocumentsToGenerateSnippets = 40
+const maxSnippetWords = 1200
 
 // stop words list from https://github.com/weixsong/elasticlunr.js/blob/master/lib/stop_word_filter.js
 const stopWords = {
@@ -154,6 +158,7 @@ function fullTextQuery (tokens) {
       .where('searchIndex')
       .equals(prefix)
       .primaryKeys()))
+    const tokenMatchSets = tokenMatches.map(matches => new Set(matches))
 
     // count of the number of documents containing each token, used for tf-idf calculation
 
@@ -168,19 +173,23 @@ function fullTextQuery (tokens) {
     A document matches if each search token is either 1) contained in the title, URL, or tags,
     even if it's part of a larger word, or 2) a word in the full-text index.
      */
-    historyInMemoryCache.forEach(function (item) {
+    for (let historyIndex = 0; historyIndex < historyInMemoryCache.length; historyIndex++) {
+      const item = historyInMemoryCache[historyIndex]
       var itext = (item.url + ' ' + item.title + ' ' + item.tags.join(' ')).toLowerCase()
       var matched = true
       for (var i = 0; i < tokens.length; i++) {
-        if (!tokenMatches[i].includes(item.id) && !itext.includes(tokens[i])) {
+        if (!tokenMatchSets[i].has(item.id) && !itext.includes(tokens[i])) {
           matched = false
           break
         }
       }
       if (matched) {
         docResults.push(item)
+        if (docResults.length >= maxDocumentsToFullyProcess) {
+          break
+        }
       }
-    })
+    }
 
     /* Finally select entire documents from intersection.
     To improve perf, we only read the full text of 100 documents for ranking,
@@ -190,7 +199,7 @@ function fullTextQuery (tokens) {
     */
     const ordered = docResults.sort(function (a, b) {
       return calculateHistoryScore(b) - calculateHistoryScore(a)
-    }).map(i => i.id).slice(0, 100)
+    }).map(i => i.id).slice(0, maxDocumentsToRank)
 
     return {
       documents: yield db.places.where('id').anyOf(ordered).toArray(),
@@ -202,6 +211,9 @@ function fullTextQuery (tokens) {
 function fullTextPlacesSearch (searchText, callback) {
   const searchWords = tokenize(searchText)
   const sl = searchWords.length
+  const snippetSearchWords = searchText.split(/\s+/g)
+    .map(w => stemmer(w.toLowerCase().replace(nonLetterRegex, '')))
+    .filter(Boolean)
 
   if (searchWords.length === 0) {
     callback([])
@@ -292,12 +304,21 @@ function fullTextPlacesSearch (searchText, callback) {
 
       doc.boost += bm25
 
-      // generate a search snippet for the document
+      // these properties are never used, and sending them from the worker takes a long time
+      delete doc.pageHTML
+      delete doc.searchIndex
+    }
 
-      // Re-tokenize the query using the less-strict rules used for the snippet, to ensure that matching between the two arrays is accurate
-      const snippetSearchWords = searchText.split(/\s+/g).map(w => stemmer(w.toLowerCase().replace(nonLetterRegex, '')))
+    docs.sort(function (a, b) {
+      return calculateHistoryScore(b) - calculateHistoryScore(a)
+    })
 
-      const snippetIndex = doc.extractedText ? doc.extractedText.split(/\s+/g) : []
+    docs.slice(0, maxDocumentsToGenerateSnippets).forEach(function (doc) {
+      if (!doc.extractedText || snippetSearchWords.length === 0) {
+        return
+      }
+
+      const snippetIndex = doc.extractedText.split(/\s+/g).slice(0, maxSnippetWords)
       const mappedWords = snippetIndex.map(w => stemmer(w.toLowerCase().replace(nonLetterRegex, '')))
 
       // find the bounds of the subarray of mappedWords with the largest number of unique search words
@@ -352,12 +373,11 @@ function fullTextPlacesSearch (searchText, callback) {
         }
         doc.searchSnippet = snippet + '...'
       }
+    })
 
-      // these properties are never used, and sending them from the worker takes a long time
-      delete doc.pageHTML
+    docs.forEach(function (doc) {
       delete doc.extractedText
-      delete doc.searchIndex
-    }
+    })
 
     callback(docs)
   })
