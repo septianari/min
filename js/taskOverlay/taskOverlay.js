@@ -417,6 +417,16 @@ var taskOverlay = {
       taskOverlay.hide()
     })
 
+    function onOutsidePointerDown (e) {
+      if (!taskOverlay.isShown) return
+      if (taskOverlay.overlayElement.contains(e.target)) return
+      if (taskSwitcherButton.contains(e.target)) return
+      taskOverlay.hide()
+    }
+
+    document.addEventListener('mousedown', onOutsidePointerDown, true)
+    document.addEventListener('touchstart', onOutsidePointerDown, true)
+
     tasks.on('state-sync-change', function () {
       if (taskOverlay.isShown) {
         taskOverlay.render()

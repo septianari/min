@@ -72,33 +72,91 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 48vw;
+  max-width: 92vw;
   height: 100%;
-  background-color: #fff;
-  white-space: nowrap;
-  overflow: auto;
+  white-space: normal;
+  overflow: hidden;
   opacity: 1;
-  transform: none;
-  transition: 0.15s all;
+  transform: translateX(0);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+  will-change: transform, opacity;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
+  border-right: 1px rgba(0, 0, 0, 0.12) solid;
   z-index: 3;
 }
 #task-area {
   flex: 1;
   overflow: auto;
-  padding-bottom: 1.5em;
+  padding: 0.5em 0.75em 1.5em 0.75em;
+}
+#task-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#task-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+#task-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+#task-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+  background-clip: content-box;
+}
+.dark-mode #task-area::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+.dark-mode #task-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+  background-clip: content-box;
+}
+.dark-mode #task-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+  background-clip: content-box;
 }
 #task-overlay[hidden] {
-  display: block !important;
-  transform: scale(1.05);
+  display: flex !important;
+  transform: translateX(calc(-100% - 12px));
   opacity: 0;
   pointer-events: none;
 }
+.dark-mode #task-overlay {
+  border-right-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.45);
+}
+.task-search-input-container {
+  width: 450px;
+  max-width: 60vw;
+  position: relative;
+  padding: 0.25em 3em;
+}
+#task-overlay .task-search-input-container {
+  width: 100%;
+  max-width: none;
+  padding: 0.25em 1em;
+}
+#task-overlay .task-search-input-container i {
+  left: 1.25em;
+}
 .task-container {
-  width: 90%;
-  margin: auto;
-  border-left: 5vw solid transparent;
-  border-right: 5vw solid transparent;
+  width: 100%;
+  margin: 0;
+  border-left: 0;
+  border-right: 0;
+  padding: 0.25em 0.75em;
+  box-sizing: border-box;
   transition: 0.5s opacity;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(0, 0, 0, 0.03);
+}
+.dark-mode .task-container {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
 }
 .task-container.collapsed {
   opacity: 0.8;
@@ -108,7 +166,7 @@
   cursor: pointer;
 }
 .task-container:not([hidden]) + .task-container {
-  padding-top: 0.75em;
+  margin-top: 0.75em;
 }
 
 .task-container.collapsed .task-tabs-container {
@@ -135,7 +193,7 @@
   font-size: 1.25em !important;
   width: 1.5em;
   text-align: center;
-  margin-left: -1.5em;
+  margin-left: 0;
   padding: 0.5em 0;
   margin-top: 0.1rem;
   transition: 0.2s opacity;
@@ -153,7 +211,7 @@ body:not(.touch)
 }
 
 .task-delete-button {
-  margin: auto -0.5em;
+  margin: auto 0 auto 0.25em;
   border-radius: 50%;
   height: 2em;
   width: 2em;
@@ -200,25 +258,32 @@ body:not(.touch)
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
+  min-width: 0;
   font-size: 1.2em;
   color: inherit;
   border: 0;
   background-color: transparent !important;
   opacity: 0.75;
-  margin: 0.5em 0.75em 0.5em 0.5em;
+  margin: 0.5em 0.5em 0.5em 0.35em;
 }
 .task-name::-webkit-input-placeholder {
   color: inherit;
   opacity: 0.8;
 }
 #add-task {
-  width: 80%;
-  margin-left: 10%;
-  padding: 1.25em;
+  width: calc(100% - 1.5em);
+  margin: 0 0.75em 0.75em 0.75em;
+  padding: 1em 1.25em;
   text-align: center;
   color: inherit;
-  background-color: rgb(245, 245, 245);
+  background-color: rgba(0, 0, 0, 0.045);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 /* hide tab element that is being dropped */
 #add-task .task-tab-item {
@@ -237,8 +302,9 @@ body:not(.touch)
 }
 
 .dark-mode #add-task {
-  background-color: rgb(33, 37, 43);
-  color: lightgrey;
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: inherit;
 }
 .dark-mode .is-dragging-tab #add-task {
   background: none;
@@ -248,26 +314,41 @@ body:not(.touch)
   background: rgba(255, 255, 255, 0.15);
 }
 #add-task:hover {
-  background-color: rgb(235, 235, 235);
+  background-color: rgba(0, 0, 0, 0.075);
+  border-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 .dark-mode #add-task:hover {
-  background-color: rgb(44, 49, 56);
+  background-color: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 #add-task .i {
   opacity: 0.75;
   vertical-align: middle;
   margin-right: 0.25em;
 }
+.ultra-dark-mode #add-task {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.ultra-dark-mode #add-task:hover {
+  background-color: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.12);
+}
 .task-action-container {
   display: flex;
   align-items: center;
-  padding-right: 1em;
+  gap: 0.15em;
 }
 .task-info-container {
   padding: 0 0.6em;
   overflow: hidden;
 }
 .task-info-container span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 100%;
   font-size: 0.9em;
   opacity: 0.6;
   margin: -0.25em 0 0.25em 0;
@@ -299,10 +380,8 @@ body:not(.touch)
   margin: -2px calc(0.25em - 2px) -2px calc(0.25em - 2px);
 }
 
-body.dark-mode #task-overlay {
-  background-color: rgb(40, 44, 52) !important;
-  color: lightgrey;
-}
+/* #task-overlay uses the same theme background/text as the tab bar via
+   `theme-background-color` / `theme-text-color` inline styles. */
 
 .dark-mode #switch-task-button {
   color: dodgerblue;
@@ -327,4 +406,25 @@ body.dark-mode #task-overlay {
 
 .dark-mode .task-tab-item.dragging-selected {
   background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.task-tabs-container {
+  list-style: none;
+  padding: 0;
+  margin: 0.25em 0 0.5em 0;
+}
+
+#task-overlay .task-tabs-container .searchbar-item {
+  border-radius: 8px;
+  padding-left: 2.35em;
+  padding-right: 2.4em;
+}
+
+#task-overlay .task-tabs-container .searchbar-item > i,
+#task-overlay .task-tabs-container .searchbar-item .icon-image {
+  left: 0.85em;
+}
+
+#task-overlay .task-tabs-container .searchbar-item .secondary-text {
+  padding-left: 0;
 }
