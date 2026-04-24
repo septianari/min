@@ -50,6 +50,12 @@ function buildAppMenu (options = {}) {
       }
     },
     {
+      label: l('appMenuDeleteAllTasks'),
+      click: function (item, window) {
+        sendIPCToWindow(window, 'deleteAllTasks')
+      }
+    },
+    {
       label: l('appMenuNewWindow'),
       accelerator: getFormattedKeyMapEntry('addWindow'),
       click: function () {

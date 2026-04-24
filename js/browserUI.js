@@ -300,9 +300,28 @@ tabBar.events.on('tab-closed', function (id) {
   closeTab(id)
 })
 
+function deleteAllTasks () {
+  if (confirm(l('deleteAllTasksConfirmation'))) {
+    tasks.forEach(function (task) {
+      task.tabs.forEach(function (tab) {
+        webviews.destroy(tab.id)
+      })
+    })
+
+    while (tasks.getLength() > 0) {
+      tasks.destroy(tasks.byIndex(0).id)
+    }
+
+    addTask()
+  }
+}
+
+ipc.on('deleteAllTasks', deleteAllTasks)
+
 module.exports = {
   addTask,
   addTab,
+  deleteAllTasks,
   destroyTask,
   destroyTab,
   closeTask,
