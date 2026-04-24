@@ -10,9 +10,10 @@ const statistics = require('js/statistics.js')
 const sessionRestore = {
   savePath: window.globalArgs['user-data-path'] + (platformType === 'windows' ? '\\sessionRestore.json' : '/sessionRestore.json'),
   previousState: null,
-  save: function (forceSave, sync) {
+  pendingSaveTimeout: null,
+  save: function (forceSave, sync, ignoreFocus) {
     //only one window (the focused one) should be responsible for saving session restore data
-    if (!document.body.classList.contains('focused')) {
+    if (!ignoreFocus && !document.body.classList.contains('focused')) {
       return
     }
 
@@ -53,6 +54,16 @@ const sessionRestore = {
       }
       sessionRestore.previousState = stateString
     }
+  },
+  scheduleSave: function (forceSave) {
+    if (sessionRestore.pendingSaveTimeout) {
+      clearTimeout(sessionRestore.pendingSaveTimeout)
+    }
+
+    sessionRestore.pendingSaveTimeout = setTimeout(function () {
+      sessionRestore.pendingSaveTimeout = null
+      sessionRestore.save(forceSave)
+    }, 1000)
   },
   restoreFromFile: function () {
     var savedStringData
@@ -231,8 +242,22 @@ const sessionRestore = {
   initialize: function () {
     setInterval(sessionRestore.save, 30000)
 
+    tasks.on('*', function (eventName) {
+      if (eventName === 'state-sync-change') {
+        return
+      }
+
+      sessionRestore.scheduleSave()
+    })
+
     window.onbeforeunload = function (e) {
-      sessionRestore.save(true, true)
+      if (sessionRestore.pendingSaveTimeout) {
+        clearTimeout(sessionRestore.pendingSaveTimeout)
+        sessionRestore.pendingSaveTimeout = null
+      }
+      // Always persist the latest tab/task state on shutdown, even if focus has
+      // already moved away from the window during the close sequence.
+      sessionRestore.save(true, true, true)
       //workaround for notifying the other windows that the task open in this window isn't open anymore.
       //This should ideally be done in windowSync, but it needs to run synchronously, which windowSync doesn't
       ipc.send('tab-state-change', [
