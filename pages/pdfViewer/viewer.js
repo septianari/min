@@ -1,6 +1,20 @@
 import '../../node_modules/pdfjs-dist/build/pdf.min.mjs'
 import '../../node_modules/pdfjs-dist/web/pdf_viewer.mjs'
 
+// Some injected scripts in embedded browser contexts call observe() before they
+// have a real DOM node. Chrome tolerates parts of that flow differently than
+// Electron's webview runtime, so guard the PDF viewer against hard crashes.
+if (window.MutationObserver && window.Node) {
+  const nativeObserve = window.MutationObserver.prototype.observe
+  window.MutationObserver.prototype.observe = function (target, options) {
+    if (!(target instanceof window.Node)) {
+      console.warn('Ignoring MutationObserver.observe() call with non-Node target', target)
+      return
+    }
+    return nativeObserve.call(this, target, options)
+  }
+}
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = '../../node_modules/pdfjs-dist/build/pdf.worker.mjs'
 
 var url = new URLSearchParams(window.location.search.replace('?', '')).get('url')
