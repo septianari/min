@@ -30,6 +30,10 @@
   line-height: 1.25em;
 }
 
+#tab-editor-input::selection {
+  background-color: rgba(128, 128, 128, 0.35);
+}
+
 #tab-editor .tab-editor-button {
   padding: 0.4em;
   margin-top: 0.1em;
