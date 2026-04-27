@@ -67,15 +67,35 @@ body.is-edit-mode #toolbar-navigation-buttons {
 #menu-button {
   width: 36px;
   padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-#menu-button {
-  display: none;
+@font-face {
+  font-family: PlemolJPConsoleNF;
+  src: url("../fonts/PlemolJPConsoleNF-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+#menu-button.menu-button-ghost-icon::before {
+  content: "\f02a0";
+  font-family: PlemolJPConsoleNF, monospace;
+  font-size: 0.85em;
+  /* font-size: 1.00em; */
+  font-style: normal;
+  font-weight: 400;
+  display: block;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body.windows #menu-button,
 body.linux #menu-button {
-  display: inline-block;
+  display: inline-flex;
 }
 
 /* tab layout */
