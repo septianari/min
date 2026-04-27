@@ -45,7 +45,7 @@ ipc.handle('addWordToSpellCheckerDictionary', function (e, word) {
   session.fromPartition('persist:webcontent').addWordToSpellCheckerDictionary(word)
 })
 
-ipc.handle('clearStorageData', function () {
+function clearStorageData () {
   return session.fromPartition('persist:webcontent').clearStorageData()
   /* It's important not to delete data from file:// from the default partition, since that would also remove internal browser data (such as bookmarks). However, HTTP data does need to be cleared, as there can be leftover data from loading external resources in the browser UI */
     .then(function () {
@@ -72,6 +72,38 @@ ipc.handle('clearStorageData', function () {
     .then(function () {
       return session.defaultSession.clearAuthCache()
     })
+}
+
+function whenPlacesWindowReady () {
+  if (!placesWindow || placesWindow.isDestroyed()) {
+    return Promise.resolve()
+  }
+
+  if (placesWindow.webContents.isLoadingMainFrame()) {
+    return new Promise(function (resolve) {
+      placesWindow.webContents.once('did-finish-load', resolve)
+    })
+  }
+
+  return Promise.resolve()
+}
+
+async function clearAllHistoryData () {
+  await whenPlacesWindowReady()
+
+  if (placesWindow && !placesWindow.isDestroyed()) {
+    await placesWindow.webContents.executeJavaScript('window.clearAllHistoryData()', true)
+  }
+
+  await clearStorageData()
+}
+
+ipc.handle('clearStorageData', function () {
+  return clearStorageData()
+})
+
+ipc.handle('clearAllHistoryData', function () {
+  return clearAllHistoryData()
 })
 
 /* window actions */

@@ -142,8 +142,7 @@ function initialize () {
     isAction: true,
     fn: function (text) {
       if (confirm(l('clearHistoryConfirmation'))) {
-        places.deleteAllHistory()
-        ipc.invoke('clearStorageData')
+        ipc.invoke('clearAllHistoryData')
       }
     }
   })

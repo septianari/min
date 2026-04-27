@@ -101,6 +101,16 @@ function loadHistoryInMemory () {
 
 loadHistoryInMemory()
 
+async function clearAllHistoryData () {
+  await db.places.filter(function (item) {
+    return item.isBookmarked === false
+  }).delete()
+
+  loadHistoryInMemory()
+}
+
+window.clearAllHistoryData = clearAllHistoryData
+
 function handleRequest (data, cb) {
   const action = data.action
   const pageData = data.pageData
@@ -198,11 +208,7 @@ function handleRequest (data, cb) {
   }
 
   if (action === 'deleteAllHistory') {
-    db.places.filter(function (item) {
-      return item.isBookmarked === false
-    }).delete().then(function () {
-      loadHistoryInMemory()
-    })
+    clearAllHistoryData()
   }
 
   if (action === 'getSuggestedTags') {

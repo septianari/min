@@ -149,6 +149,7 @@
     "settingsContentBlockingExceptions": "Ads will still be allowed on these websites:",
     "settingsBlockScriptsToggle": "Block scripts",
     "settingsBlockImagesToggle": "Block images",
+    "settingsClearHistoryOnExitToggle": "Delete browsing data on exit",
     "settingsBlockedRequestCount": {
       "unsafeHTML": "So far, Min has blocked <strong></strong> ads and trackers."
     },

@@ -4,6 +4,7 @@ var contentTypeBlockingContainer = document.getElementById('content-type-blockin
 var banner = document.getElementById('restart-required-banner')
 var siteThemeCheckbox = document.getElementById('checkbox-site-theme')
 var showDividerCheckbox = document.getElementById('checkbox-show-divider')
+var clearHistoryOnExitCheckbox = document.getElementById('checkbox-clear-history-on-exit')
 var userscriptsCheckbox = document.getElementById('checkbox-userscripts')
 var userscriptsShowDirectorySection = document.getElementById('userscripts-show-directory')
 var separateTitlebarCheckbox = document.getElementById('checkbox-separate-titlebar')
@@ -236,6 +237,16 @@ settings.get('siteTheme', function (value) {
 
 siteThemeCheckbox.addEventListener('change', function (e) {
   settings.set('siteTheme', this.checked)
+})
+
+/* clear history on exit setting */
+
+settings.get('clearHistoryOnExit', function (value) {
+  clearHistoryOnExitCheckbox.checked = value === true
+})
+
+clearHistoryOnExitCheckbox.addEventListener('change', function () {
+  settings.set('clearHistoryOnExit', this.checked)
 })
 
 /* startup settings */

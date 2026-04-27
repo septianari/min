@@ -77,6 +77,8 @@ var mainMenu = null
 var secondaryMenu = null
 var isFocusMode = false
 var appIsReady = false
+var isClearingHistoryOnQuit = false
+var hasClearedHistoryOnQuit = false
 
 const isFirstInstance = app.requestSingleInstanceLock()
 
@@ -418,6 +420,24 @@ app.on('second-instance', function (e, argv, workingDir) {
     // add a tab with the new URL
     handleCommandLineArguments(argv)
   }
+})
+
+app.on('before-quit', function (e) {
+  if (hasClearedHistoryOnQuit || isClearingHistoryOnQuit || settings.get('clearHistoryOnExit') !== true) {
+    return
+  }
+
+  e.preventDefault()
+  isClearingHistoryOnQuit = true
+
+  clearAllHistoryData().catch(function (err) {
+    console.warn('failed to clear history on exit')
+    console.error(err)
+  }).finally(function () {
+    hasClearedHistoryOnQuit = true
+    isClearingHistoryOnQuit = false
+    app.quit()
+  })
 })
 
 /**

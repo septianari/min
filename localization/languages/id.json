@@ -147,6 +147,7 @@
     "settingsContentBlockingExceptions": "Iklan akan tetap diperbolehkan di situs web ini:",
     "settingsBlockScriptsToggle": "Blokir script",
     "settingsBlockImagesToggle": "Blokir gambar",
+    "settingsClearHistoryOnExitToggle": "Bersihkan semua riwayat dan data penjelajahan saat Min ditutup",
     "settingsBlockedRequestCount": {
       "unsafeHTML": "Sejauh ini, Min telah memblokir <strong></strong> iklan dan pelacak."
     },

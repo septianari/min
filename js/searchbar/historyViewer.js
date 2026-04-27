@@ -30,14 +30,13 @@ module.exports = {
 
           clearButton.addEventListener('click', function () {
             if (confirm(l('clearHistoryConfirmation'))) {
-              places.deleteAllHistory()
-              ipc.invoke('clearStorageData')
-
-              // hacky way to refresh the list
-              // TODO make a better api for this
-              setTimeout(function () {
-                searchbarPlugins.run('!history ' + text, input, null)
-              }, 200)
+              ipc.invoke('clearAllHistoryData').then(function () {
+                // hacky way to refresh the list
+                // TODO make a better api for this
+                setTimeout(function () {
+                  searchbarPlugins.run('!history ' + text, input, null)
+                }, 200)
+              })
             }
           })
         }
