@@ -257,6 +257,7 @@
     /* Tab menu */
     "tabMenuNewWindow": "Move Tab to New Window",
     "tabMenuReload": "Reload",
+    "tabMenuEmptyCacheAndReload": "Empty Cache and Hard Reload",
     /* PDF Viewer */
     "PDFInvertPage": "Invert page colors",
     "PDFPageCounter": {

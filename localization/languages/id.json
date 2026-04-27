@@ -254,6 +254,7 @@
     /* Tab menu */
     "tabMenuNewWindow": null, // missing translation
     "tabMenuReload": null, // missing translation
+    "tabMenuEmptyCacheAndReload": "Kosongkan Cache dan Muat Ulang Paksa",
     /* PDF Viewer */
     "PDFInvertPage": null, //missing translation
     "PDFPageCounter": {

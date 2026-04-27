@@ -10,6 +10,16 @@ const PasswordManagers = require('passwordManager/passwordManager.js')
 
 const remoteMenu = require('remoteMenuRenderer.js')
 
+function reloadCurrentTab (ignoreCache = false) {
+  if (tabs.get(tabs.getSelected()).url.startsWith(webviews.internalPages.error)) {
+    // Reload the original page rather than reloading the internal error page.
+    webviews.update(tabs.getSelected(), new URL(tabs.get(tabs.getSelected()).url).searchParams.get('url'))
+    return
+  }
+
+  webviews.callAsync(tabs.getSelected(), ignoreCache ? 'reloadIgnoringCache' : 'reload')
+}
+
 const webviewMenu = {
   menuData: null,
   showMenu: function (data, extraData) { // data comes from a context-menu event
@@ -264,6 +274,20 @@ const webviewMenu = {
           try {
             webviews.callAsync(tabs.getSelected(), 'navigationHistory.goForward')
           } catch (e) { }
+        }
+      },
+      {
+        label: l('tabMenuEmptyCacheAndReload'),
+        click: async function () {
+          try {
+            const reloaded = await ipc.invoke('emptyCacheAndHardReload', tabs.getSelected())
+            if (!reloaded) {
+              reloadCurrentTab(true)
+            }
+          } catch (e) {
+            console.warn('failed to empty cache and hard reload from context menu', e)
+            reloadCurrentTab(true)
+          }
         }
       }
     ]
