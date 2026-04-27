@@ -195,6 +195,8 @@
     "customSearchEngineDescription": "Replace the search term with %s",
     "settingsKeyboardShortcutsHeading": "Keyboard Shortcuts",
     "settingsKeyboardShortcutsHelp": "Use commas to separate multiple shortcuts.",
+    "settingsShortcutReloadIgnoringCache": "Hard Reload",
+    "settingsShortcutEmptyCacheAndHardReload": "Empty Cache and Reload",
     "settingsProxyHeading": "Proxy",
     "settingsNoProxy": "No Proxy",
     "settingsManualProxy": "Manual Configuration",
@@ -225,6 +227,7 @@
     "appMenuZoomIn": "Zoom In",
     "appMenuZoomOut": "Zoom Out",
     "appMenuActualSize": "Actual Size",
+    "appMenuEmptyCacheAndHardReload": "Empty Cache and Hard Reload",
     "appMenuFullScreen": "Full Screen", //on some platforms, this string is replaced with one built-in to the OS
     "appMenuFocusMode": "Focus Mode",
     "appMenuBookmarks": "Bookmarks",

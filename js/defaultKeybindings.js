@@ -10,6 +10,16 @@ var settings = require('util/settings/settings.js')
 
 var keyMap = keyMapModule.userKeyMap(settings.get('keyMap'))
 
+function reloadCurrentTab (ignoreCache = false) {
+  if (tabs.get(tabs.getSelected()).url.startsWith(webviews.internalPages.error)) {
+    // Reload the original page rather than showing the error page again.
+    webviews.update(tabs.getSelected(), new URL(tabs.get(tabs.getSelected()).url).searchParams.get('url'))
+    return
+  }
+
+  webviews.callAsync(tabs.getSelected(), ignoreCache ? 'reloadIgnoringCache' : 'reload')
+}
+
 const defaultKeybindings = {
   initialize: function () {
     keybindings.defineShortcut('quitMin', function () {
@@ -253,17 +263,23 @@ const defaultKeybindings = {
     })
 
     keybindings.defineShortcut('reload', function () {
-      if (tabs.get(tabs.getSelected()).url.startsWith(webviews.internalPages.error)) {
-        // reload the original page rather than show the error page again
-        webviews.update(tabs.getSelected(), new URL(tabs.get(tabs.getSelected()).url).searchParams.get('url'))
-      } else {
-        // this can't be an error page, use the normal reload method
-        webviews.callAsync(tabs.getSelected(), 'reload')
-      }
+      reloadCurrentTab()
     })
 
     keybindings.defineShortcut('reloadIgnoringCache', function () {
-      webviews.callAsync(tabs.getSelected(), 'reloadIgnoringCache')
+      reloadCurrentTab(true)
+    })
+
+    keybindings.defineShortcut('emptyCacheAndHardReload', async function () {
+      try {
+        const reloaded = await ipc.invoke('emptyCacheAndHardReload', tabs.getSelected())
+        if (!reloaded) {
+          reloadCurrentTab(true)
+        }
+      } catch (e) {
+        console.warn('failed to empty cache and hard reload', e)
+        reloadCurrentTab(true)
+      }
     })
 
     keybindings.defineShortcut('showHistory', function () {

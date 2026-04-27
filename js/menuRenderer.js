@@ -11,6 +11,16 @@ var tabEditor = require('navbar/tabEditor.js')
 var readerView = require('readerView.js')
 var taskOverlay = require('taskOverlay/taskOverlay.js')
 
+function reloadCurrentTab (ignoreCache = false) {
+  if (tabs.get(tabs.getSelected()).url.startsWith(webviews.internalPages.error)) {
+    // Reload the original page rather than reloading the internal error page.
+    webviews.update(tabs.getSelected(), new URL(tabs.get(tabs.getSelected()).url).searchParams.get('url'))
+    return
+  }
+
+  webviews.callAsync(tabs.getSelected(), ignoreCache ? 'reloadIgnoringCache' : 'reload')
+}
+
 module.exports = {
   initialize: function () {
     ipc.on('zoomIn', function () {
@@ -48,6 +58,18 @@ module.exports = {
 
     ipc.on('inspectPage', function () {
       webviews.callAsync(tabs.getSelected(), 'toggleDevTools')
+    })
+
+    ipc.on('emptyCacheAndHardReload', async function () {
+      try {
+        const reloaded = await ipc.invoke('emptyCacheAndHardReload', tabs.getSelected())
+        if (!reloaded) {
+          reloadCurrentTab(true)
+        }
+      } catch (e) {
+        console.warn('failed to empty cache and hard reload', e)
+        reloadCurrentTab(true)
+      }
     })
 
     ipc.on('openEditor', function () {

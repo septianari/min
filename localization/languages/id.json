@@ -193,6 +193,8 @@
     "customSearchEngineDescription": "Ganti pencarian menjadi %s",
     "settingsKeyboardShortcutsHeading": "Pintasan Keyboard",
     "settingsKeyboardShortcutsHelp": "Gunakan koma untuk memisahkan beberapa pintasan.",
+    "settingsShortcutReloadIgnoringCache": "Muat Ulang Paksa",
+    "settingsShortcutEmptyCacheAndHardReload": "Kosongkan Cache dan Muat Ulang Paksa",
     "settingsProxyHeading": "Proxy",
     "settingsNoProxy": "Tanpa Proxy",
     "settingsManualProxy": "Konfigurasi Manual",
@@ -222,6 +224,7 @@
     "appMenuZoomIn": "Perbesar",
     "appMenuZoomOut": "Perkecil",
     "appMenuActualSize": "Ukuran Sebenarnya",
+    "appMenuEmptyCacheAndHardReload": "Kosongkan Cache dan Muat Ulang Paksa",
     "appMenuFullScreen": "Layar Penuh", //on some platforms, this string is replaced with one built-in to the OS
     "appMenuFocusMode": "Mode Fokus",
     "appMenuBookmarks": "Markah",

@@ -29,6 +29,7 @@ var defaultKeyMap = {
   closeWindow: 'shift+mod+w',
   reload: ['mod+r', 'f5'],
   reloadIgnoringCache: 'mod+f5',
+  emptyCacheAndHardReload: 'shift+mod+f5',
   showMenu: 'ctrl+m',
   followLink: 'mod+enter',
   fillPassword: 'mod+\\',

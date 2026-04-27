@@ -474,11 +474,27 @@ function formatCamelCase (text) {
   return result.charAt(0).toUpperCase() + result.slice(1)
 }
 
+function getKeyMapActionLabel (action) {
+  var localizedLabels = {
+    reloadIgnoringCache: 'settingsShortcutReloadIgnoringCache',
+    emptyCacheAndHardReload: 'settingsShortcutEmptyCacheAndHardReload'
+  }
+
+  if (localizedLabels[action]) {
+    var localized = l(localizedLabels[action])
+    if (typeof localized === 'string') {
+      return localized
+    }
+  }
+
+  return formatCamelCase(action)
+}
+
 function createKeyMapListItem (action, keyMap) {
   var li = document.createElement('li')
   var label = document.createElement('label')
   var input = document.createElement('input')
-  label.innerText = formatCamelCase(action)
+  label.innerText = getKeyMapActionLabel(action)
   label.htmlFor = action
 
   input.type = 'text'

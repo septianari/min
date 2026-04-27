@@ -591,9 +591,71 @@ function loadURLInView (id, url, win) {
   viewStateMap[id].loadedInitialURL = true
 }
 
+async function emptyCacheAndReloadView (id) {
+  const view = viewMap[id]
+  if (!view || !view.webContents || view.webContents.isDestroyed()) {
+    return false
+  }
+
+  const { webContents } = view
+  const debuggerInstance = webContents.debugger
+  let attachedHere = false
+
+  try {
+    if (!debuggerInstance.isAttached()) {
+      debuggerInstance.attach('1.3')
+      attachedHere = true
+    }
+
+    await debuggerInstance.sendCommand('Network.enable')
+    await debuggerInstance.sendCommand('Network.clearBrowserCache')
+
+    try {
+      await debuggerInstance.sendCommand('Network.setBypassServiceWorker', { bypass: true })
+    } catch (e) {
+      // Older Chromium builds may not support service-worker bypass here.
+    }
+
+    await debuggerInstance.sendCommand('Network.setCacheDisabled', { cacheDisabled: true })
+
+    const didStopLoading = new Promise((resolve) => {
+      webContents.once('did-stop-loading', resolve)
+    })
+
+    await debuggerInstance.sendCommand('Page.reload', { ignoreCache: true })
+    await didStopLoading
+
+    return true
+  } finally {
+    if (!webContents.isDestroyed() && debuggerInstance.isAttached()) {
+      try {
+        await debuggerInstance.sendCommand('Network.setCacheDisabled', { cacheDisabled: false })
+      } catch (e) {}
+
+      try {
+        await debuggerInstance.sendCommand('Network.setBypassServiceWorker', { bypass: false })
+      } catch (e) {}
+
+      try {
+        await debuggerInstance.sendCommand('Network.disable')
+      } catch (e) {}
+
+      if (attachedHere) {
+        try {
+          debuggerInstance.detach()
+        } catch (e) {}
+      }
+    }
+  }
+}
+
 ipc.on('loadURLInView', function (e, args) {
   const win = windows.windowFromContents(e.sender)?.win
   loadURLInView(args.id, args.url, win)
+})
+
+ipc.handle('emptyCacheAndHardReload', function (e, id) {
+  return emptyCacheAndReloadView(id)
 })
 
 ipc.on('callViewMethod', function (e, data) {

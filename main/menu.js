@@ -325,10 +325,24 @@ function buildAppMenu (options = {}) {
           type: 'separator'
         },
         {
+          label: l('appMenuEmptyCacheAndHardReload'),
+          accelerator: getFormattedKeyMapEntry('emptyCacheAndHardReload'),
+          click: function (item, window, event) {
+            if (!event.triggeredByAccelerator) {
+              sendIPCToWindow(window, 'emptyCacheAndHardReload')
+            }
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
           label: l('appMenuFocusMode'),
           accelerator: undefined,
-          type: 'checkbox',
-          checked: false,
+          ...(options.secondary ? {} : {
+            type: 'checkbox',
+            checked: false
+          }),
           click: function (item, window) {
             if (isFocusMode) {
               isFocusMode = false
