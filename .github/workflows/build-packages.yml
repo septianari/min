@@ -71,7 +71,8 @@ jobs:
       shell: bash
       run: |
         current_tag="${GITHUB_REF_NAME}"
-        previous_tag="$(git tag --sort=-version:refname | grep -Fxv "$current_tag" | head -n 1)"
+        current_commit="$(git rev-list -n 1 "$current_tag")"
+        previous_tag="$(git describe --tags --abbrev=0 "${current_commit}^" 2>/dev/null || true)"
 
         {
           echo "## Changes"
@@ -81,7 +82,6 @@ jobs:
             git log "${previous_tag}..${current_tag}" --pretty=format:'- %s'
             echo
             echo
-            echo "Full Changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${current_tag}"
           else
             git log "${current_tag}" --pretty=format:'- %s'
           fi
