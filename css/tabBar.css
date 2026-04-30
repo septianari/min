@@ -323,6 +323,15 @@ body.windows.dark-theme .navbar-action-button:not(:disabled):hover {
 }
 .navbar-right-actions {
   margin-right: 2.3em;
+  display: flex;
+  align-items: center;
+}
+
+#zoom-indicator {
+  font-size: 13px;
+  font-weight: 600;
+  margin-right: 8px;
+  opacity: 0.6;
 }
 
 .navbar-right-actions #add-tab-button {
