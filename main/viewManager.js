@@ -17,10 +17,10 @@ function getHTTPSOrigin (url) {
 
   try {
     const parsed = new URL(url)
-    if (parsed.protocol !== 'https:') {
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'wss:') {
       return null
     }
-    return parsed.origin
+    return parsed.origin.replace('wss://', 'https://')
   } catch (e) {
     return null
   }
