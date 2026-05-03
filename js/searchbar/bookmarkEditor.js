@@ -172,12 +172,20 @@ const bookmarkEditor = {
     })
     tags.selected = bookmarkEditor.currentInstance.bookmark.tags
 
+    const allItems = await places.getAllItems()
+    let allTags = []
+    allItems.forEach(item => {
+      allTags = allTags.concat(item.tags)
+    })
+    const existingTags = allTags.filter((tag, idx) => allTags.indexOf(tag) === idx && !tags.selected.includes(tag))
+
     places.getSuggestedTags(bookmarkEditor.currentInstance.bookmark.url).then(function (suggestions) {
       tags.suggested = tags.suggested.concat(suggestions)
+      tags.suggested = tags.suggested.concat(existingTags)
 
       tags.suggested.filter((tag, idx) => {
         return tags.suggested.indexOf(tag) === idx && !tags.selected.includes(tag)
-      }).slice(0, 3).forEach(function (tag, idx) {
+      }).forEach(function (tag, idx) {
         tagArea.appendChild(bookmarkEditor.getTagElement(tag, false, function () {
           places.toggleTag(bookmarkEditor.currentInstance.bookmark.url, tag)
         }))
