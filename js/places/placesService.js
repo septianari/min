@@ -197,6 +197,10 @@ function handleRequest (data, cb) {
         console.warn('failed to update history.')
         console.warn('page url was: ' + pageData.url)
         console.error(err)
+        cb({
+          result: null,
+          callbackId: callbackId
+        })
       })
     })
   }
@@ -212,15 +216,29 @@ function handleRequest (data, cb) {
   }
 
   if (action === 'getSuggestedTags') {
+    const item = historyInMemoryCache.find(i => i.url === pageData.url)
+    if (!item) {
+      return cb({
+        result: [],
+        callbackId: callbackId
+      })
+    }
     cb({
-      result: tagIndex.getSuggestedTags(historyInMemoryCache.find(i => i.url === pageData.url)),
+      result: tagIndex.getSuggestedTags(item),
       callbackId: callbackId
     })
   }
 
   if (action === 'getAllTagsRanked') {
+    const item = historyInMemoryCache.find(i => i.url === pageData.url)
+    if (!item) {
+      return cb({
+        result: [],
+        callbackId: callbackId
+      })
+    }
     cb({
-      result: tagIndex.getAllTagsRanked(historyInMemoryCache.find(i => i.url === pageData.url)),
+      result: tagIndex.getAllTagsRanked(item),
       callbackId: callbackId
     })
   }
@@ -292,9 +310,17 @@ ipcRenderer.on('places-connect', function (e) {
   e.ports[0].addEventListener('message', function (e2) {
     const data = e2.data
 
-    handleRequest(data, function (res) {
-      e.ports[0].postMessage(res)
-    })
+    try {
+      handleRequest(data, function (res) {
+        e.ports[0].postMessage(res)
+      })
+    } catch (e) {
+      console.warn(e)
+      e.ports[0].postMessage({
+        result: null,
+        callbackId: data.callbackId
+      })
+    }
   })
   e.ports[0].start()
 })

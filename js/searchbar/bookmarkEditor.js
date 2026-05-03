@@ -100,6 +100,15 @@ const bookmarkEditor = {
     bookmarkEditor.currentInstance = {}
     bookmarkEditor.currentInstance.bookmark = await places.getItem(url)
 
+    if (!bookmarkEditor.currentInstance.bookmark) {
+      // bookmark was deleted or never existed
+      bookmarkEditor.currentInstance.bookmark = {
+        url: url,
+        title: url,
+        tags: []
+      }
+    }
+
     var editor = document.createElement('div')
     editor.className = 'bookmark-editor searchbar-item'
 
