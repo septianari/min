@@ -313,6 +313,31 @@ function deleteAllTasks () {
     }
 
     addTask()
+
+    // After creating the new task & tab, navigate the first tab to the default search engine's homepage
+    try {
+      var current = searchEngine.getCurrent()
+      var homepage = null
+
+      if (current && current.urlObj && current.urlObj.origin) {
+        homepage = current.urlObj.origin + '/'
+      } else if (current && current.searchURL) {
+        try {
+          var tmp = new URL(current.searchURL.replace('%s', ''))
+          homepage = tmp.origin + '/'
+        } catch (e) {
+          // fallback to using the searchURL directly with empty query
+          homepage = current.searchURL.replace('%s', '')
+        }
+      }
+
+      if (homepage) {
+        webviews.update(tabs.getSelected(), homepage)
+        tabEditor.hide()
+      }
+    } catch (e) {
+      // ignore any errors determining the homepage
+    }
   }
 }
 
