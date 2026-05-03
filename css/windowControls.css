@@ -82,7 +82,8 @@ body.windows:not(.separate-titlebar) .windows-caption-buttons {
   text-align: center;
 }
 
-body:not(.task-overlay-is-shown).dark-theme .windows-caption-buttons .element {
+/*body:not(.task-overlay-is-shown).dark-theme .windows-caption-buttons .element {*/
+body.dark-theme .windows-caption-buttons .element {
   stroke: #fff;
 }
 
