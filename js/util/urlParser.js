@@ -1,4 +1,4 @@
-const punycode = require('punycode')
+const punycode = require('punycode/')
 const path = require('path')
 
 const searchEngine = require('util/searchEngine.js')
