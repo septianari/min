@@ -37,6 +37,7 @@ setInterval(cleanupHistoryDatabase, 60 * 60 * 1000)
 
 let historyInMemoryCache = []
 let doneLoadingHistoryCache = false
+let historyLoadedPromise = null
 
 function addToHistoryCache (item) {
   if (item.isBookmarked) {
@@ -86,8 +87,9 @@ function removeFromHistoryCache (url) {
 
 function loadHistoryInMemory () {
   historyInMemoryCache = []
+  doneLoadingHistoryCache = false
 
-  db.places.orderBy('visitCount').reverse().each(function (item) {
+  historyLoadedPromise = db.places.orderBy('visitCount').reverse().each(function (item) {
     addToHistoryCache(item)
   }).then(function () {
     // if we have enough matches during the search, we exit. In order for this to work, frequently visited sites have to come first in the cache.
@@ -106,7 +108,7 @@ async function clearAllHistoryData () {
     return item.isBookmarked === false
   }).delete()
 
-  loadHistoryInMemory()
+  await loadHistoryInMemory()
 }
 
 window.clearAllHistoryData = clearAllHistoryData
@@ -120,29 +122,33 @@ function handleRequest (data, cb) {
   const options = data.options
 
   if (action === 'getPlace') {
-    let found = false
-    for (let i = 0; i < historyInMemoryCache.length; i++) {
-      if (historyInMemoryCache[i].url === pageData.url) {
+    historyLoadedPromise.then(function () {
+      let found = false
+      for (let i = 0; i < historyInMemoryCache.length; i++) {
+        if (historyInMemoryCache[i].url === pageData.url) {
+          cb({
+            result: historyInMemoryCache[i],
+            callbackId: callbackId
+          })
+          found = true
+          break
+        }
+      }
+      if (!found) {
         cb({
-          result: historyInMemoryCache[i],
+          result: null,
           callbackId: callbackId
         })
-        found = true
-        break
       }
-    }
-    if (!found) {
-      cb({
-        result: null,
-        callbackId: callbackId
-      })
-    }
+    })
   }
 
   if (action === 'getAllPlaces') {
-    cb({
-      result: historyInMemoryCache,
-      callbackId: callbackId
+    historyLoadedPromise.then(function () {
+      cb({
+        result: historyInMemoryCache,
+        callbackId: callbackId
+      })
     })
   }
 
@@ -216,30 +222,34 @@ function handleRequest (data, cb) {
   }
 
   if (action === 'getSuggestedTags') {
-    const item = historyInMemoryCache.find(i => i.url === pageData.url)
-    if (!item) {
-      return cb({
-        result: [],
+    historyLoadedPromise.then(function () {
+      const item = historyInMemoryCache.find(i => i.url === pageData.url)
+      if (!item) {
+        return cb({
+          result: [],
+          callbackId: callbackId
+        })
+      }
+      cb({
+        result: tagIndex.getSuggestedTags(item),
         callbackId: callbackId
       })
-    }
-    cb({
-      result: tagIndex.getSuggestedTags(item),
-      callbackId: callbackId
     })
   }
 
   if (action === 'getAllTagsRanked') {
-    const item = historyInMemoryCache.find(i => i.url === pageData.url)
-    if (!item) {
-      return cb({
-        result: [],
+    historyLoadedPromise.then(function () {
+      const item = historyInMemoryCache.find(i => i.url === pageData.url)
+      if (!item) {
+        return cb({
+          result: [],
+          callbackId: callbackId
+        })
+      }
+      cb({
+        result: tagIndex.getAllTagsRanked(item),
         callbackId: callbackId
       })
-    }
-    cb({
-      result: tagIndex.getAllTagsRanked(item),
-      callbackId: callbackId
     })
   }
 
@@ -258,29 +268,33 @@ function handleRequest (data, cb) {
   }
 
   if (action === 'searchPlaces') { // do a history search
-    searchPlaces(searchText, function (matches) {
-      cb({
-        result: matches,
-        callbackId: callbackId
-      })
-    }, options)
+    historyLoadedPromise.then(function () {
+      searchPlaces(searchText, function (matches) {
+        cb({
+          result: matches,
+          callbackId: callbackId
+        })
+      }, options)
+    })
   }
 
   if (action === 'searchPlacesFullText') {
-    fullTextPlacesSearch(searchText, function (matches) {
-      matches.sort(function (a, b) {
-        return calculateHistoryScore(b) - calculateHistoryScore(a)
-      })
+    historyLoadedPromise.then(function () {
+      fullTextPlacesSearch(searchText, function (matches) {
+        matches.sort(function (a, b) {
+          return calculateHistoryScore(b) - calculateHistoryScore(a)
+        })
 
-      cb({
-        result: matches.slice(0, 100),
-        callbackId: callbackId
+        cb({
+          result: matches.slice(0, 100),
+          callbackId: callbackId
+        })
       })
     })
   }
 
   if (action === 'getPlaceSuggestions') {
-    function returnSuggestionResults () {
+    historyLoadedPromise.then(function () {
       const cTime = Date.now()
 
       let results = historyInMemoryCache.slice().filter(i => cTime - i.lastVisit < 604800000)
@@ -297,12 +311,7 @@ function handleRequest (data, cb) {
         result: results.slice(0, 100),
         callbackId: callbackId
       })
-    }
-    if (historyInMemoryCache.length > 10 || doneLoadingHistoryCache) {
-      returnSuggestionResults()
-    } else {
-      setTimeout(returnSuggestionResults, 100)
-    }
+    })
   }
 }
 
@@ -324,3 +333,5 @@ ipcRenderer.on('places-connect', function (e) {
   })
   e.ports[0].start()
 })
+
+ipcRenderer.send('places-setup-ready')

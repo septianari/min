@@ -17,12 +17,13 @@ if (!Promise.withResolvers) {
 
 const places = {
   messagePort: null,
+  callbackIdCounter: 0,
   sendMessage: function (data) {
     places.messagePort.postMessage(data)
   },
   pendingPromises: {},
   invokeWithPromise: function (data) {
-    const callbackId = Math.random()
+    const callbackId = places.callbackIdCounter++
     const { promise, resolve, reject } = Promise.withResolvers()
     places.pendingPromises[callbackId] = { promise, resolve, reject }
     places.messagePort.postMessage({

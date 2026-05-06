@@ -510,6 +510,9 @@ ipc.on('request-tab-state', function(e) {
 const placesPage = 'file://' + __dirname + '/js/places/placesService.html'
 
 let placesWindow = null
+let placesWindowReady = false
+let pendingPlacesPorts = []
+
 app.once('ready', function() {
   placesWindow = new BrowserWindow({
     width: 300,
@@ -522,10 +525,28 @@ app.once('ready', function() {
   })
 
   placesWindow.loadURL(placesPage)
+
+  placesWindow.webContents.on('render-process-gone', function (e, details) {
+    console.warn('places process gone, restarting...', details)
+    placesWindowReady = false
+    placesWindow.loadURL(placesPage)
+  })
+})
+
+ipc.on('places-setup-ready', function () {
+  placesWindowReady = true
+  pendingPlacesPorts.forEach(ports => {
+    placesWindow.webContents.postMessage('places-connect', null, ports)
+  })
+  pendingPlacesPorts = []
 })
 
 ipc.on('places-connect', function (e) {
-  placesWindow.webContents.postMessage('places-connect', null, e.ports)
+  if (placesWindow && placesWindowReady) {
+    placesWindow.webContents.postMessage('places-connect', null, e.ports)
+  } else {
+    pendingPlacesPorts.push(e.ports)
+  }
 })
 
 function getWindowWebContents (win) {

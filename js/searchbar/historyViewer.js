@@ -14,7 +14,7 @@ module.exports = {
       icon: 'carbon:recently-viewed',
       isAction: false,
       showSuggestions: async function (text, input, event) {
-        const results = await places.searchPlaces(text, { limit: Infinity })
+        const results = await places.searchPlaces(text, { limit: 1000 })
 
         searchbarPlugins.reset('bangs')
 
