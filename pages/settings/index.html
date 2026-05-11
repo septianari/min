@@ -83,6 +83,59 @@
           data-string="settingsClearHistoryOnExitToggle"
         ></label>
       </div>
+
+      <div class="setting-section browsing-data-section">
+        <h4 data-string="settingsBrowsingDataHeading"></h4>
+        <div
+          class="settings-info-subheading"
+          data-string="settingsBrowsingDataDescription"
+        ></div>
+
+        <div class="browsing-data-options" id="clear-browsing-data-options">
+          <label>
+            <input type="checkbox" data-clear-option="history" checked />
+            <span data-string="settingsBrowsingDataHistory"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-option="cookies" checked />
+            <span data-string="settingsBrowsingDataCookies"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-option="siteData" checked />
+            <span data-string="settingsBrowsingDataSiteData"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-option="cache" checked />
+            <span data-string="settingsBrowsingDataCache"></span>
+          </label>
+        </div>
+
+        <button id="clear-browsing-data-button" data-string="settingsBrowsingDataClearButton"></button>
+        <span id="clear-browsing-data-status" role="status"></span>
+      </div>
+
+      <div class="setting-section browsing-data-section" id="clear-browsing-data-on-exit-options">
+        <h4 data-string="settingsBrowsingDataOnExitHeading"></h4>
+        <div class="settings-info-subheading" data-string="settingsBrowsingDataOnExitDescription"></div>
+        <div class="browsing-data-options">
+          <label>
+            <input type="checkbox" data-clear-on-exit-option="history" />
+            <span data-string="settingsBrowsingDataHistory"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-on-exit-option="cookies" />
+            <span data-string="settingsBrowsingDataCookies"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-on-exit-option="siteData" />
+            <span data-string="settingsBrowsingDataSiteData"></span>
+          </label>
+          <label>
+            <input type="checkbox" data-clear-on-exit-option="cache" />
+            <span data-string="settingsBrowsingDataCache"></span>
+          </label>
+        </div>
+      </div>
     </div>
 
     <div class="settings-container" id="appearance-settings-container">

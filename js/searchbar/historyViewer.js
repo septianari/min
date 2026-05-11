@@ -5,6 +5,7 @@ var bangsPlugin = require('searchbar/bangsPlugin.js')
 var places = require('places/places.js')
 var urlParser = require('util/urlParser.js')
 var formatRelativeDate = require('util/relativeDate.js')
+var showClearBrowsingDataDialog = require('util/clearBrowsingDataDialog.js')
 
 module.exports = {
   initialize: function () {
@@ -29,8 +30,10 @@ module.exports = {
           container.appendChild(clearButton)
 
           clearButton.addEventListener('click', function () {
-            if (confirm(l('clearHistoryConfirmation'))) {
-              ipc.invoke('clearAllHistoryData').then(function () {
+            var options = showClearBrowsingDataDialog()
+
+            if (options) {
+              ipc.invoke('clearAllHistoryData', options).then(function () {
                 // hacky way to refresh the list
                 // TODO make a better api for this
                 setTimeout(function () {

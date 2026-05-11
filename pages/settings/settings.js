@@ -5,6 +5,10 @@ var banner = document.getElementById('restart-required-banner')
 var siteThemeCheckbox = document.getElementById('checkbox-site-theme')
 var showDividerCheckbox = document.getElementById('checkbox-show-divider')
 var clearHistoryOnExitCheckbox = document.getElementById('checkbox-clear-history-on-exit')
+var clearBrowsingDataButton = document.getElementById('clear-browsing-data-button')
+var clearBrowsingDataStatus = document.getElementById('clear-browsing-data-status')
+var clearBrowsingDataOptionsContainer = document.getElementById('clear-browsing-data-options')
+var clearBrowsingDataOnExitOptionsContainer = document.getElementById('clear-browsing-data-on-exit-options')
 var userscriptsCheckbox = document.getElementById('checkbox-userscripts')
 var userscriptsShowDirectorySection = document.getElementById('userscripts-show-directory')
 var separateTitlebarCheckbox = document.getElementById('checkbox-separate-titlebar')
@@ -241,12 +245,92 @@ siteThemeCheckbox.addEventListener('change', function (e) {
 
 /* clear history on exit setting */
 
+var defaultBrowsingDataOptions = {
+  history: true,
+  cookies: true,
+  siteData: true,
+  cache: true
+}
+
+function getBrowsingDataOptions (container, attribute) {
+  var options = {}
+  Array.from(container.querySelectorAll('input[' + attribute + ']')).forEach(function (input) {
+    options[input.getAttribute(attribute)] = input.checked
+  })
+  return options
+}
+
+function setBrowsingDataOptions (container, attribute, options) {
+  options = Object.assign({}, defaultBrowsingDataOptions, options)
+  Array.from(container.querySelectorAll('input[' + attribute + ']')).forEach(function (input) {
+    input.checked = options[input.getAttribute(attribute)] !== false
+  })
+}
+
+function hasSelectedBrowsingDataOption (options) {
+  return Object.keys(options).some(function (key) {
+    return options[key]
+  })
+}
+
+function updateClearBrowsingDataButton () {
+  clearBrowsingDataButton.disabled = !hasSelectedBrowsingDataOption(getBrowsingDataOptions(clearBrowsingDataOptionsContainer, 'data-clear-option'))
+}
+
 settings.get('clearHistoryOnExit', function (value) {
   clearHistoryOnExitCheckbox.checked = value === true
+  clearBrowsingDataOnExitOptionsContainer.hidden = value !== true
+})
+
+settings.get('clearBrowsingDataOnExitOptions', function (value) {
+  setBrowsingDataOptions(clearBrowsingDataOnExitOptionsContainer, 'data-clear-on-exit-option', value)
 })
 
 clearHistoryOnExitCheckbox.addEventListener('change', function () {
   settings.set('clearHistoryOnExit', this.checked)
+  clearBrowsingDataOnExitOptionsContainer.hidden = !this.checked
+})
+
+Array.from(clearBrowsingDataOptionsContainer.querySelectorAll('input[data-clear-option]')).forEach(function (input) {
+  input.addEventListener('change', updateClearBrowsingDataButton)
+})
+
+Array.from(clearBrowsingDataOnExitOptionsContainer.querySelectorAll('input[data-clear-on-exit-option]')).forEach(function (input) {
+  input.addEventListener('change', function () {
+    settings.set('clearBrowsingDataOnExitOptions', getBrowsingDataOptions(clearBrowsingDataOnExitOptionsContainer, 'data-clear-on-exit-option'))
+  })
+})
+
+clearBrowsingDataButton.addEventListener('click', function () {
+  var options = getBrowsingDataOptions(clearBrowsingDataOptionsContainer, 'data-clear-option')
+
+  if (!hasSelectedBrowsingDataOption(options)) {
+    return
+  }
+
+  if (!confirm(l('settingsBrowsingDataClearConfirmation'))) {
+    return
+  }
+
+  clearBrowsingDataButton.disabled = true
+  clearBrowsingDataStatus.textContent = l('settingsBrowsingDataClearing')
+  postMessage({ message: 'clearBrowsingData', options })
+})
+
+window.addEventListener('message', function (e) {
+  if (!e.data || !e.data.message) {
+    return
+  }
+
+  if (e.data.message === 'clearBrowsingDataComplete') {
+    clearBrowsingDataStatus.textContent = l('settingsBrowsingDataCleared')
+    updateClearBrowsingDataButton()
+  }
+
+  if (e.data.message === 'clearBrowsingDataError') {
+    clearBrowsingDataStatus.textContent = l('settingsBrowsingDataError')
+    updateClearBrowsingDataButton()
+  }
 })
 
 /* startup settings */

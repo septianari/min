@@ -45,33 +45,118 @@ ipc.handle('addWordToSpellCheckerDictionary', function (e, word) {
   session.fromPartition('persist:webcontent').addWordToSpellCheckerDictionary(word)
 })
 
-function clearStorageData () {
-  const defaultSessionStorages = ['cookies', 'filesystem', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+const defaultClearBrowsingDataOptions = {
+  history: true,
+  cookies: true,
+  siteData: true,
+  cache: true
+}
 
-  return session.fromPartition('persist:webcontent').clearStorageData()
+function normalizeClearBrowsingDataOptions (options) {
+  if (!options) {
+    return defaultClearBrowsingDataOptions
+  }
+
+  return {
+    history: options.history !== false,
+    cookies: options.cookies !== false,
+    siteData: options.siteData !== false,
+    cache: options.cache !== false
+  }
+}
+
+function getStorageTypesToClear (options, isDefaultSession) {
+  const storages = []
+
+  if (options.cookies) {
+    storages.push('cookies')
+  }
+
+  if (options.siteData) {
+    storages.push('filesystem', 'localstorage', 'websql', 'serviceworkers', 'cachestorage')
+
+    if (!isDefaultSession) {
+      storages.push('indexdb')
+    }
+  }
+
+  if (options.cache) {
+    storages.push('shadercache')
+  }
+
+  return storages
+}
+
+function clearStorageData (options) {
+  options = normalizeClearBrowsingDataOptions(options)
+
+  const webContentStorages = getStorageTypesToClear(options, false)
+  const defaultSessionStorages = getStorageTypesToClear(options, true)
+
+  let clearPromise = Promise.resolve()
+
+  if (webContentStorages.length > 0) {
+    clearPromise = clearPromise.then(function () {
+      return session.fromPartition('persist:webcontent').clearStorageData({ storages: webContentStorages })
+    })
+  }
+
+  return clearPromise
   /* It's important not to delete data from file:// from the default partition, since that would also remove internal browser data (such as bookmarks). However, HTTP data does need to be cleared, as there can be leftover data from loading external resources in the browser UI */
     .then(function () {
+      if (defaultSessionStorages.length === 0) {
+        return null
+      }
+
       return session.defaultSession.clearStorageData({ origin: 'http://', storages: defaultSessionStorages })
     })
     .then(function () {
+      if (defaultSessionStorages.length === 0) {
+        return null
+      }
+
       return session.defaultSession.clearStorageData({ origin: 'https://', storages: defaultSessionStorages })
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.fromPartition('persist:webcontent').clearCache()
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.fromPartition('persist:webcontent').clearHostResolverCache()
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.fromPartition('persist:webcontent').clearAuthCache()
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.defaultSession.clearCache()
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.defaultSession.clearHostResolverCache()
     })
     .then(function () {
+      if (!options.cache) {
+        return null
+      }
+
       return session.defaultSession.clearAuthCache()
     })
 }
@@ -90,22 +175,26 @@ function whenPlacesWindowReady () {
   return Promise.resolve()
 }
 
-async function clearAllHistoryData () {
+async function clearAllHistoryData (options) {
+  options = normalizeClearBrowsingDataOptions(options)
+
   await whenPlacesWindowReady()
 
-  if (placesWindow && !placesWindow.isDestroyed()) {
+  if (options.history && placesWindow && !placesWindow.isDestroyed()) {
     await placesWindow.webContents.executeJavaScript('window.clearAllHistoryData()', true)
   }
 
-  await clearStorageData()
+  if (options.cookies || options.siteData || options.cache) {
+    await clearStorageData(options)
+  }
 }
 
-ipc.handle('clearStorageData', function () {
-  return clearStorageData()
+ipc.handle('clearStorageData', function (e, options) {
+  return clearStorageData(options)
 })
 
-ipc.handle('clearAllHistoryData', function () {
-  return clearAllHistoryData()
+ipc.handle('clearAllHistoryData', function (e, options) {
+  return clearAllHistoryData(options)
 })
 
 /* window actions */

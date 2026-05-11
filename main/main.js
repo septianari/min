@@ -430,7 +430,7 @@ app.on('before-quit', function (e) {
   e.preventDefault()
   isClearingHistoryOnQuit = true
 
-  clearAllHistoryData().catch(function (err) {
+  clearAllHistoryData(settings.get('clearBrowsingDataOnExitOptions')).catch(function (err) {
     console.warn('failed to clear history on exit')
     console.error(err)
   }).finally(function () {

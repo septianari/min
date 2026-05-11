@@ -16,6 +16,7 @@ const bookmarkConverter = require('bookmarkConverter.js')
 const searchbarPlugins = require('searchbar/searchbarPlugins.js')
 const tabEditor = require('navbar/tabEditor.js')
 const formatRelativeDate = require('util/relativeDate.js')
+const showClearBrowsingDataDialog = require('util/clearBrowsingDataDialog.js')
 
 function moveToTaskCommand (taskId) {
   // remove the tab from the current task
@@ -141,8 +142,10 @@ function initialize () {
     icon: 'carbon:trash-can',
     isAction: true,
     fn: function (text) {
-      if (confirm(l('clearHistoryConfirmation'))) {
-        ipc.invoke('clearAllHistoryData')
+      const options = showClearBrowsingDataDialog()
+
+      if (options) {
+        ipc.invoke('clearAllHistoryData', options)
       }
     }
   })
