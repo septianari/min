@@ -151,7 +151,7 @@
     "settingsBlockImagesToggle": "Block images",
     "settingsClearHistoryOnExitToggle": "Delete browsing data on exit",
     "settingsBrowsingDataHeading": "Browsing data",
-    "settingsBrowsingDataDescription": "Choose which data Min should delete. Bookmarked URLs are kept when history is cleared.",
+    "settingsBrowsingDataDescription": "Choose which data Min should delete.",
     "settingsBrowsingDataHistory": "Browsing history",
     "settingsBrowsingDataCookies": "Cookies",
     "settingsBrowsingDataSiteData": "Site data",

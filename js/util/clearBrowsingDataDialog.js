@@ -12,7 +12,7 @@ function showClearBrowsingDataDialog () {
     ok: l('settingsBrowsingDataClearButton'),
     cancel: l('dialogSkipButton'),
     width: 460,
-    height: 270
+    height: 300
   })
 
   if (!result) {
