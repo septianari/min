@@ -46,13 +46,15 @@ ipc.handle('addWordToSpellCheckerDictionary', function (e, word) {
 })
 
 function clearStorageData () {
+  const defaultSessionStorages = ['cookies', 'filesystem', 'localstorage', 'shadercache', 'websql', 'serviceworkers', 'cachestorage']
+
   return session.fromPartition('persist:webcontent').clearStorageData()
   /* It's important not to delete data from file:// from the default partition, since that would also remove internal browser data (such as bookmarks). However, HTTP data does need to be cleared, as there can be leftover data from loading external resources in the browser UI */
     .then(function () {
-      return session.defaultSession.clearStorageData({ origin: 'http://' })
+      return session.defaultSession.clearStorageData({ origin: 'http://', storages: defaultSessionStorages })
     })
     .then(function () {
-      return session.defaultSession.clearStorageData({ origin: 'https://' })
+      return session.defaultSession.clearStorageData({ origin: 'https://', storages: defaultSessionStorages })
     })
     .then(function () {
       return session.fromPartition('persist:webcontent').clearCache()
