@@ -185,6 +185,7 @@
     "settingsShowDividerToggle": "Show divider between tabs",
     "settingsLanguageSelection": "Language: ",
     "settingsSeparateTitlebarToggle": "Use separate title bar",
+    "settingsSpellcheckToggle": "Enable spell check",
     "settingsAutoplayToggle": "Enable Autoplay",
     "settingsOpenTabsInForegroundToggle": "Open new tabs in the foreground",
     "settingsUserscriptsExplanation": {

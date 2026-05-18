@@ -146,10 +146,32 @@ function getDefaultViewWebPreferences () {
       autoplayPolicy: (settings.get('enableAutoplay') ? 'no-user-gesture-required' : 'user-gesture-required'),
       // match Chrome's default for anti-fingerprinting purposes (Electron defaults to 0)
       minimumFontSize: 6,
-      javascript: !(settings.get('filtering')?.contentTypes?.includes('script'))
+      javascript: !(settings.get('filtering')?.contentTypes?.includes('script')),
+      spellcheck: settings.get('enableSpellcheck') !== false
     }
   )
 }
+
+function updateSpellcheck () {
+  const enabled = settings.get('enableSpellcheck') !== false
+  session.defaultSession.setSpellCheckerEnabled(enabled)
+  for (var id in viewMap) {
+    const view = viewMap[id]
+    if (view.webContents && !view.webContents.isDestroyed()) {
+      view.webContents.session.setSpellCheckerEnabled(enabled)
+    }
+  }
+}
+
+settings.listen('enableSpellcheck', function (value) {
+  if (app.isReady()) {
+    updateSpellcheck()
+  }
+})
+
+app.once('ready', function () {
+  updateSpellcheck()
+})
 
 function isPrivateViewPartition (partition) {
   return typeof partition === 'string' && partition.startsWith(privateViewPartitionPrefix)

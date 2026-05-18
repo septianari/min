@@ -12,6 +12,7 @@ var clearBrowsingDataOnExitOptionsContainer = document.getElementById('clear-bro
 var userscriptsCheckbox = document.getElementById('checkbox-userscripts')
 var userscriptsShowDirectorySection = document.getElementById('userscripts-show-directory')
 var separateTitlebarCheckbox = document.getElementById('checkbox-separate-titlebar')
+var spellcheckCheckbox = document.getElementById('checkbox-spellcheck')
 var openTabsInForegroundCheckbox = document.getElementById('checkbox-open-tabs-in-foreground')
 var autoPlayCheckbox = document.getElementById('checkbox-enable-autoplay')
 var userAgentCheckbox = document.getElementById('checkbox-user-agent')
@@ -416,6 +417,20 @@ settings.get('useSeparateTitlebar', function (value) {
 separateTitlebarCheckbox.addEventListener('change', function (e) {
   settings.set('useSeparateTitlebar', this.checked)
   showRestartRequiredBanner()
+})
+
+/* spellcheck setting */
+
+settings.get('enableSpellcheck', function (value) {
+  if (value === true || value === undefined) {
+    spellcheckCheckbox.checked = true
+  } else {
+    spellcheckCheckbox.checked = false
+  }
+})
+
+spellcheckCheckbox.addEventListener('change', function (e) {
+  settings.set('enableSpellcheck', this.checked)
 })
 
 /* tabs in foreground setting */

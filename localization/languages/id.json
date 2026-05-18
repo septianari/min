@@ -183,6 +183,7 @@
     "settingsShowDividerToggle": "Tampilkan pemisah antara tab",
     "settingsLanguageSelection": null, //missing translation
     "settingsSeparateTitlebarToggle": "Gunakan bilah judul terpisah",
+    "settingsSpellcheckToggle": "Aktifkan pemeriksa ejaan",
     "settingsAutoplayToggle": "Aktifkan Putar Otomatis",
     "settingsOpenTabsInForegroundToggle": "Buka tab baru di latar depan",
     "settingsUserscriptsExplanation": {
