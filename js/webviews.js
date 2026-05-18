@@ -5,6 +5,10 @@ var settings = require('util/settings/settings.js')
 
 var placeholderImg = document.getElementById('webview-placeholder')
 
+function getPrivateWebviewPartition (tabId) {
+  return 'persist:private-' + tabId
+}
+
 var hasSeparateTitlebar = settings.get('useSeparateTitlebar')
 var windowIsMaximized = false // affects navbar height on Windows
 var windowIsFullscreen = false
@@ -195,6 +199,7 @@ const webviews = {
   },
   add: function (tabId, existingViewId) {
     var tabData = tabs.get(tabId)
+    const partition = tabData.private ? getPrivateWebviewPartition(tabId) : 'persist:webcontent'
 
     // needs to be called before the view is created to that its listeners can be registered
     if (tabData.scrollPosition) {
@@ -205,17 +210,15 @@ const webviews = {
       setAudioMutedOnCreate(tabId, tabData.muted)
     }
 
-    // if the tab is private, we want to partition it. See http://electron.atom.io/docs/v0.34.0/api/web-view-tag/#partition
-    // since tab IDs are unique, we can use them as partition names
-    if (tabData.private === true) {
-      var partition = tabId.toString() // options.tabId is a number, which remote.session.fromPartition won't accept. It must be converted to a string first
-    }
+    // if (tabData.private) {
+    //   console.log('[private-partition] create webview for tab', tabId, 'using partition', partition, 'existingViewId', existingViewId || null)
+    // }
 
     ipc.send('createView', {
       existingViewId,
       id: tabId,
       webPreferences: {
-        partition: partition || 'persist:webcontent'
+        partition
       },
       boundsString: JSON.stringify(webviews.getViewBounds()),
       events: webviews.events.map(e => e.event).filter((i, idx, arr) => arr.indexOf(i) === idx)

@@ -2,6 +2,8 @@ var viewMap = {} // id: view
 var viewStateMap = {} // id: view state
 
 var temporaryPopupViews = {} // id: view
+var privateViewPartitionPrefix = 'persist:private-'
+var privateSessionClearPromise = Promise.resolve()
 
 // per-session allowlist of HTTPS origins that the user explicitly chose to bypass certificate errors for
 var insecureCertAllowlist = new WeakMap() // Session -> Set(origin)
@@ -149,6 +151,61 @@ function getDefaultViewWebPreferences () {
   )
 }
 
+function isPrivateViewPartition (partition) {
+  return typeof partition === 'string' && partition.startsWith(privateViewPartitionPrefix)
+}
+
+function clearPrivateViewSessionData (partition) {
+  if (!isPrivateViewPartition(partition)) {
+    return Promise.resolve()
+  }
+
+  privateSessionClearPromise = privateSessionClearPromise.catch(function () {}).then(async function () {
+    // console.log('[private-partition] clearing session data for', partition)
+    const privateSession = session.fromPartition(partition)
+
+    await privateSession.clearStorageData({
+      storages: ['cookies', 'filesystem', 'localstorage', 'websql', 'serviceworkers', 'cachestorage', 'indexdb']
+    })
+    await privateSession.clearCache()
+    await privateSession.clearHostResolverCache()
+    await privateSession.clearAuthCache()
+
+    const allowlist = insecureCertAllowlist.get(privateSession)
+    if (allowlist) {
+      allowlist.clear()
+    }
+
+    // console.log('[private-partition] cleared session data for', partition)
+  }).catch(function (err) {
+    console.warn('failed to clear private browsing session data for', partition, err)
+  })
+
+  return privateSessionClearPromise
+}
+
+function clearAllPrivatePartitionData () {
+  const partitionsPath = path.join(app.getPath('userData'), 'Partitions')
+
+  if (!fs.existsSync(partitionsPath)) {
+    return Promise.resolve()
+  }
+
+  const privatePartitions = fs.readdirSync(partitionsPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory() && entry.name.startsWith(privateViewPartitionPrefix.replace('persist:', '')))
+    .map(entry => privateViewPartitionPrefix + entry.name.replace(/^private-/, ''))
+
+  // if (privatePartitions.length > 0) {
+  //   console.log('[private-partition] startup cleanup found partitions', privatePartitions)
+  // }
+
+  return privatePartitions.reduce(function (promise, partition) {
+    return promise.then(function () {
+      return clearPrivateViewSessionData(partition)
+    })
+  }, Promise.resolve())
+}
+
 function createView (existingViewId, id, webPreferences, boundsString, events) {
   if (viewMap[id]) {
     console.warn("View already exists for " + id)
@@ -159,8 +216,13 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
 
   viewStateMap[id] = {
     loadedInitialURL: false,
-    hasJS: viewPrefs.javascript // need this later to see if we should swap the view for a JS-enabled one
+    hasJS: viewPrefs.javascript, // need this later to see if we should swap the view for a JS-enabled one
+    privatePartition: isPrivateViewPartition(viewPrefs.partition) ? viewPrefs.partition : null
   }
+
+  // if (viewStateMap[id].privatePartition) {
+  //   console.log('[private-partition] create view', id, 'partition', viewStateMap[id].privatePartition, 'existingViewId', existingViewId || null)
+  // }
 
   let view
   if (existingViewId) {
@@ -418,6 +480,12 @@ function destroyView (id) {
     return
   }
 
+  const privatePartition = viewStateMap[id] && viewStateMap[id].privatePartition
+
+  // if (privatePartition) {
+  //   console.log('[private-partition] destroy view', id, 'partition', privatePartition)
+  // }
+
   windows.getAll().forEach(function (window) {
     if (windows.getState(window).selectedView === id) {
       window.getContentView().removeChildView(viewMap[id])
@@ -428,6 +496,10 @@ function destroyView (id) {
 
   delete viewMap[id]
   delete viewStateMap[id]
+
+  if (privatePartition) {
+    clearPrivateViewSessionData(privatePartition)
+  }
 }
 
 function destroyAllViews () {
@@ -789,3 +861,7 @@ ipc.on('saveViewCapture', function (e, data) {
 })
 
 global.getView = getView
+
+app.once('ready', function () {
+  clearAllPrivatePartitionData()
+})
