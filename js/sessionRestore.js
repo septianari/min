@@ -66,141 +66,140 @@ const sessionRestore = {
     }, 1000)
   },
   restoreFromFile: function () {
-    var savedStringData
-    try {
-      savedStringData = fs.readFileSync(sessionRestore.savePath, 'utf-8')
-    } catch (e) {
-      console.warn('failed to read session restore data', e)
-    }
-
-    var startupConfigOption = settings.get('startupTabOption') || 2
-    /*
-    1 - reopen last task
-    2 - open new task, keep old tabs in background
-    3 - discard old tabs and open new task
-    */
-
-    /*
-    Disabled - show a user survey on startup
-    // the survey should only be shown after an upgrade from an earlier version
-    var shouldShowSurvey = false
-    if (savedStringData && !localStorage.getItem('1.15survey')) {
-      shouldShowSurvey = true
-    }
-    localStorage.setItem('1.15survey', 'true')
-    */
-
-    try {
-      // first run, show the tour
-      if (!savedStringData) {
-        tasks.setSelected(tasks.add()) // create a new task
-
-        var newTab = tasks.getSelected().tabs.add({
-            url: 'https://minbrowser.github.io/min/tour'
-        })
-        browserUI.addTab(newTab, {
-         enterEditMode: false
-        })
-        return
+    fs.readFile(sessionRestore.savePath, 'utf-8', function (err, savedStringData) {
+      if (err) {
+        console.warn('failed to read session restore data', err)
       }
 
-      var data = JSON.parse(savedStringData)
-
-      // the data isn't restorable
-      if ((data.version && data.version !== 2) || (data.state && data.state.tasks && data.state.tasks.length === 0)) {
-        tasks.setSelected(tasks.add())
-
-        browserUI.addTab(tasks.getSelected().tabs.add())
-        return
-      }
-
-      // add the saved tasks
-
-      data.state.tasks.forEach(function (task) {
-        // restore the task item
-        tasks.add(task)
-
-        /*
-        If the task contained only private tabs, none of the tabs will be contained in the session restore data, but tasks must always have at least 1 tab, so create a new empty tab if the task doesn't have any.
-        */
-        if (task.tabs.length === 0) {
-          tasks.get(task.id).tabs.add()
-        }
-      })
-
-      var mostRecentTasks = tasks.slice().sort((a, b) => {
-        return tasks.getLastActivity(b.id) - tasks.getLastActivity(a.id)
-      })
-      if (mostRecentTasks.length > 0) {
-        tasks.setSelected(mostRecentTasks[0].id)
-      }
-
-      // switch to the previously selected tasks
-
-      if (tasks.getSelected().tabs.isEmpty() || startupConfigOption === 1) {
-        browserUI.switchToTask(mostRecentTasks[0].id)
-        if (tasks.getSelected().tabs.isEmpty()) {
-          tabEditor.show(tasks.getSelected().tabs.getSelected())
-        }
-      } else {
-        window.createdNewTaskOnStartup = true
-        // try to reuse a previous empty task
-        var lastTask = tasks.byIndex(tasks.getLength() - 1)
-        if (lastTask && lastTask.tabs.isEmpty() && !lastTask.name) {
-          browserUI.switchToTask(lastTask.id)
-          tabEditor.show(lastTask.tabs.getSelected())
-        } else {
-          browserUI.addTask()
-        }
-      }
-
-      /* Disabled - show user survey
-      // if this isn't the first run, and the survey popup hasn't been shown yet, show it
-      if (shouldShowSurvey) {
-        fetch('https://minbrowser.org/survey/survey15.json').then(function (response) {
-          return response.json()
-        }).then(function (data) {
-          setTimeout(function () {
-            if (data.available && data.url) {
-              if (tasks.getSelected().tabs.isEmpty()) {
-                webviews.update(tasks.getSelected().tabs.getSelected(), data.url)
-                tabEditor.hide()
-              } else {
-                var surveyTab = tasks.getSelected().tabs.add({
-                  url: data.url
-                })
-                browserUI.addTab(surveyTab, {
-                  enterEditMode: false
-                })
-              }
-            }
-          }, 200)
-        })
-      }
+      var startupConfigOption = settings.get('startupTabOption') || 2
+      /*
+      1 - reopen last task
+      2 - open new task, keep old tabs in background
+      3 - discard old tabs and open new task
       */
-    } catch (e) {
-      // an error occured while restoring the session data
 
-      console.error('restoring session failed: ', e)
+      /*
+      Disabled - show a user survey on startup
+      // the survey should only be shown after an upgrade from an earlier version
+      var shouldShowSurvey = false
+      if (savedStringData && !localStorage.getItem('1.15survey')) {
+        shouldShowSurvey = true
+      }
+      localStorage.setItem('1.15survey', 'true')
+      */
 
-      var backupSavePath = require('path').join(window.globalArgs['user-data-path'], 'sessionRestoreBackup-' + Date.now() + '.json')
+      try {
+        // first run, show the tour
+        if (!savedStringData) {
+          tasks.setSelected(tasks.add()) // create a new task
 
-      writeFileAtomic.sync(backupSavePath, savedStringData, {})
+          var newTab = tasks.getSelected().tabs.add({
+            url: 'https://minbrowser.github.io/min/tour'
+          })
+          browserUI.addTab(newTab, {
+            enterEditMode: false
+          })
+          return
+        }
 
-      // destroy any tabs that were created during the restore attempt
-      tabState.initialize()
+        var data = JSON.parse(savedStringData)
 
-      // create a new tab with an explanation of what happened
-      var newTask = tasks.add()
-      var newSessionErrorTab = tasks.get(newTask).tabs.add({
-        url: 'min://app/pages/sessionRestoreError/index.html?backupLoc=' + encodeURIComponent(backupSavePath)
-      })
+        // the data isn't restorable
+        if ((data.version && data.version !== 2) || (data.state && data.state.tasks && data.state.tasks.length === 0)) {
+          tasks.setSelected(tasks.add())
 
-      browserUI.switchToTask(newTask)
-      browserUI.switchToTab(newSessionErrorTab)
+          browserUI.addTab(tasks.getSelected().tabs.add())
+          return
+        }
 
-      statistics.incrementValue('sessionRestorationErrors')
-    }
+        // add the saved tasks
+
+        data.state.tasks.forEach(function (task) {
+          // restore the task item
+          tasks.add(task)
+
+          /*
+          If the task contained only private tabs, none of the tabs will be contained in the session restore data, but tasks must always have at least 1 tab, so create a new empty tab if the task doesn't have any.
+          */
+          if (task.tabs.length === 0) {
+            tasks.get(task.id).tabs.add()
+          }
+        })
+
+        var mostRecentTasks = tasks.slice().sort((a, b) => {
+          return tasks.getLastActivity(b.id) - tasks.getLastActivity(a.id)
+        })
+        if (mostRecentTasks.length > 0) {
+          tasks.setSelected(mostRecentTasks[0].id)
+        }
+
+        // switch to the previously selected tasks
+
+        if (tasks.getSelected().tabs.isEmpty() || startupConfigOption === 1) {
+          browserUI.switchToTask(mostRecentTasks[0].id)
+          if (tasks.getSelected().tabs.isEmpty()) {
+            tabEditor.show(tasks.getSelected().tabs.getSelected())
+          }
+        } else {
+          window.createdNewTaskOnStartup = true
+          // try to reuse a previous empty task
+          var lastTask = tasks.byIndex(tasks.getLength() - 1)
+          if (lastTask && lastTask.tabs.isEmpty() && !lastTask.name) {
+            browserUI.switchToTask(lastTask.id)
+            tabEditor.show(lastTask.tabs.getSelected())
+          } else {
+            browserUI.addTask()
+          }
+        }
+
+        /* Disabled - show user survey
+        // if this isn't the first run, and the survey popup hasn't been shown yet, show it
+        if (shouldShowSurvey) {
+          fetch('https://minbrowser.org/survey/survey15.json').then(function (response) {
+            return response.json()
+          }).then(function (data) {
+            setTimeout(function () {
+              if (data.available && data.url) {
+                if (tasks.getSelected().tabs.isEmpty()) {
+                  webviews.update(tasks.getSelected().tabs.getSelected(), data.url)
+                  tabEditor.hide()
+                } else {
+                  var surveyTab = tasks.getSelected().tabs.add({
+                    url: data.url
+                  })
+                  browserUI.addTab(surveyTab, {
+                    enterEditMode: false
+                  })
+                }
+              }
+            }, 200)
+          })
+        }
+        */
+      } catch (e) {
+        // an error occured while restoring the session data
+
+        console.error('restoring session failed: ', e)
+
+        var backupSavePath = require('path').join(window.globalArgs['user-data-path'], 'sessionRestoreBackup-' + Date.now() + '.json')
+
+        writeFileAtomic.sync(backupSavePath, savedStringData, {})
+
+        // destroy any tabs that were created during the restore attempt
+        tabState.initialize()
+
+        // create a new tab with an explanation of what happened
+        var newTask = tasks.add()
+        var newSessionErrorTab = tasks.get(newTask).tabs.add({
+          url: 'min://app/pages/sessionRestoreError/index.html?backupLoc=' + encodeURIComponent(backupSavePath)
+        })
+
+        browserUI.switchToTask(newTask)
+        browserUI.switchToTab(newSessionErrorTab)
+
+        statistics.incrementValue('sessionRestorationErrors')
+      }
+    })
   },
   syncWithWindow: function () {
     const data = ipc.sendSync('request-tab-state')

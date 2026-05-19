@@ -31,19 +31,19 @@ var settings = {
     settings.runChangeCallbacks(key)
   },
   initialize: function () {
-    var fileData
-    try {
-      fileData = fs.readFileSync(settings.filePath, 'utf-8')
-    } catch (e) {
-      if (e.code !== 'ENOENT') {
-        console.warn(e)
+    fs.readFile(settings.filePath, 'utf-8', function (err, fileData) {
+      if (err) {
+        if (err.code !== 'ENOENT') {
+          console.warn(err)
+        }
       }
-    }
-    if (fileData) {
-      settings.list = JSON.parse(fileData)
-    }
 
-    settings.runChangeCallbacks()
+      if (fileData) {
+        settings.list = JSON.parse(fileData)
+      }
+
+      settings.runChangeCallbacks()
+    })
 
     ipc.on('settingChanged', function (e, key, value) {
       settings.list[key] = value
