@@ -127,8 +127,15 @@ function extractAndShowNavigation (doc) {
       .filter(el => el.textContent.trim() && el.textContent.trim().replace(/\s+/g, ' ').length < 65)
 
     // remove duplicates
-    var itemURLSet = items.map(item => new URL(item.href).toString())
-    items = items.filter((item, idx) => itemURLSet.indexOf(new URL(item.href).toString()) === idx)
+    const itemURLSet = new Set()
+    items = items.filter(function (item) {
+      const url = new URL(item.href).toString()
+      if (itemURLSet.has(url)) {
+        return false
+      }
+      itemURLSet.add(url)
+      return true
+    })
 
     // show links up to a character limit (so they all mostly fit in one line)
     // TODO maybe have a way to show more links (dropdown menu?)

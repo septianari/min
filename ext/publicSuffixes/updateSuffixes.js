@@ -1,5 +1,4 @@
 /* downloads public list of suffixes maintained by Mozilla and community */
-const punycode = require('punycode/')
 const https = require('https')
 const fs = require('fs')
 const path = require('path')
@@ -25,7 +24,9 @@ https.get(listURL, function (r) {
       if (line.startsWith('*.')) {
         line = line.slice(2)
       }
-      line = punycode.toASCII(line)
+      try {
+        line = new URL('http://' + line).hostname
+      } catch (e) {}
       cleanData.push(`.${line}`)
     }
 

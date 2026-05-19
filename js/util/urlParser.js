@@ -1,4 +1,3 @@
-const punycode = require('punycode/')
 const path = require('path')
 
 const searchEngine = require('util/searchEngine.js')
@@ -147,11 +146,12 @@ var urlParser = {
     url = urlParser.removeProtocol(url)
     return url.split(/[/:]/)[0].toLowerCase()
   },
-  // primitive domain validation based on RFC1034
   validateDomain: function (domain) {
-    domain = urlParser.unicodeRegex.test(domain)
-      ? punycode.toASCII(domain)
-      : domain
+    if (urlParser.unicodeRegex.test(domain)) {
+      try {
+        domain = new URL('http://' + domain).hostname
+      } catch (e) {}
+    }
 
     if (!urlParser.validDomainRegex.test(domain)) {
       return false

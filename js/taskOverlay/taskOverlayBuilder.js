@@ -181,7 +181,15 @@ var TaskOverlayBuilder = {
         if (favicons.length > 0) {
           var faviconsEl = document.createElement('span')
           faviconsEl.className = 'task-favicons'
-          favicons = favicons.filter((i, idx) => faviconURLs.indexOf(i.url) === idx)
+
+          const seenFavicons = new Set()
+          favicons = favicons.filter(function (favicon) {
+            if (seenFavicons.has(favicon.url)) {
+              return false
+            }
+            seenFavicons.add(favicon.url)
+            return true
+          })
 
           favicons.forEach(function (favicon) {
             var img = document.createElement('img')
