@@ -7,6 +7,7 @@
   right: var(--control-space-right);
   height: 35px;
   z-index: 99;
+  -webkit-app-region: no-drag;
 }
 
 /* leave room for menu button */
