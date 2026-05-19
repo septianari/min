@@ -141,8 +141,9 @@ async function translate (destLang) {
         nodesSet[rootNodeIndex].translated = true
       })
 
-      console.log('translated ', nodesSet.filter(item => item.translated).map(item => item.originalLength).reduce((a, b) => a + b), 'chars')
-      if (nodesSet.filter(item => item.translated).map(item => item.originalLength).reduce((a, b) => a + b) < maxCharsToTranslate && nodesSet.some(item => !item.translated)) {
+      const translatedChars = nodesSet.reduce((acc, item) => acc + (item.translated ? item.originalLength : 0), 0)
+      console.log('translated ', translatedChars, 'chars')
+      if (translatedChars < maxCharsToTranslate && nodesSet.some(item => !item.translated)) {
         handleChunk()
       }
     }

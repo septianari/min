@@ -221,7 +221,7 @@ const webviews = {
         partition
       },
       boundsString: JSON.stringify(webviews.getViewBounds()),
-      events: webviews.events.map(e => e.event).filter((i, idx, arr) => arr.indexOf(i) === idx)
+      events: Array.from(new Set(webviews.events.map(e => e.event)))
     })
 
     if (!existingViewId) {

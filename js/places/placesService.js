@@ -36,6 +36,7 @@ setInterval(cleanupHistoryDatabase, 60 * 60 * 1000)
 // cache history in memory for faster searching. This actually takes up very little space, so we can cache everything.
 
 let historyInMemoryCache = []
+let historyMap = new Map()
 let doneLoadingHistoryCache = false
 let historyLoadedPromise = null
 
@@ -49,6 +50,7 @@ function addToHistoryCache (item) {
   item.searchTextCache = getSearchTextCache(item)
 
   historyInMemoryCache.push(item)
+  historyMap.set(item.url, item)
 }
 
 function addOrUpdateHistoryCache (item) {
@@ -57,19 +59,15 @@ function addOrUpdateHistoryCache (item) {
 
   item.searchTextCache = getSearchTextCache(item)
 
-  let oldItem
+  let oldItem = historyMap.get(item.url)
 
-  for (let i = 0; i < historyInMemoryCache.length; i++) {
-    if (historyInMemoryCache[i].url === item.url) {
-      oldItem = historyInMemoryCache[i]
-      historyInMemoryCache[i] = item
-      break
-    }
-  }
-
-  if (!oldItem) {
+  if (oldItem) {
+    const index = historyInMemoryCache.indexOf(oldItem)
+    historyInMemoryCache[index] = item
+  } else {
     historyInMemoryCache.push(item)
   }
+  historyMap.set(item.url, item)
 
   if (oldItem) {
     tagIndex.onChange(oldItem, item)
@@ -77,16 +75,20 @@ function addOrUpdateHistoryCache (item) {
 }
 
 function removeFromHistoryCache (url) {
-  for (let i = 0; i < historyInMemoryCache.length; i++) {
-    if (historyInMemoryCache[i].url === url) {
-      tagIndex.removePage(historyInMemoryCache[i])
-      historyInMemoryCache.splice(i, 1)
+  const item = historyMap.get(url)
+  if (item) {
+    tagIndex.removePage(item)
+    const index = historyInMemoryCache.indexOf(item)
+    if (index > -1) {
+      historyInMemoryCache.splice(index, 1)
     }
+    historyMap.delete(url)
   }
 }
 
 function loadHistoryInMemory () {
   historyInMemoryCache = []
+  historyMap = new Map()
   doneLoadingHistoryCache = false
 
   historyLoadedPromise = db.places.orderBy('visitCount').reverse().each(function (item) {
@@ -94,7 +96,7 @@ function loadHistoryInMemory () {
   }).then(function () {
     // if we have enough matches during the search, we exit. In order for this to work, frequently visited sites have to come first in the cache.
     historyInMemoryCache.sort(function (a, b) {
-      return calculateHistoryScore(b) - calculateHistoryScore(a)
+      return calculateHistoryScore(a) - calculateHistoryScore(b)
     })
 
     doneLoadingHistoryCache = true
@@ -123,23 +125,11 @@ function handleRequest (data, cb) {
 
   if (action === 'getPlace') {
     historyLoadedPromise.then(function () {
-      let found = false
-      for (let i = 0; i < historyInMemoryCache.length; i++) {
-        if (historyInMemoryCache[i].url === pageData.url) {
-          cb({
-            result: historyInMemoryCache[i],
-            callbackId: callbackId
-          })
-          found = true
-          break
-        }
-      }
-      if (!found) {
-        cb({
-          result: null,
-          callbackId: callbackId
-        })
-      }
+      const item = historyMap.get(pageData.url)
+      cb({
+        result: item || null,
+        callbackId: callbackId
+      })
     })
   }
 
@@ -223,7 +213,7 @@ function handleRequest (data, cb) {
 
   if (action === 'getSuggestedTags') {
     historyLoadedPromise.then(function () {
-      const item = historyInMemoryCache.find(i => i.url === pageData.url)
+      const item = historyMap.get(pageData.url)
       if (!item) {
         return cb({
           result: [],
@@ -239,7 +229,7 @@ function handleRequest (data, cb) {
 
   if (action === 'getAllTagsRanked') {
     historyLoadedPromise.then(function () {
-      const item = historyInMemoryCache.find(i => i.url === pageData.url)
+      const item = historyMap.get(pageData.url)
       if (!item) {
         return cb({
           result: [],

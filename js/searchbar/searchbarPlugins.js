@@ -4,6 +4,7 @@ var urlParser = require('util/urlParser.js')
 
 var plugins = [] // format is {name, container, trigger, showResults}
 var results = {} // format is {pluginName: [results]}
+var resultURLKeys = new Set()
 var URLOpener
 var URLHandlers = [] // format is {trigger, action}
 
@@ -21,6 +22,7 @@ const searchbarPlugins = {
       plugin: null,
       item: null
     }
+    resultURLKeys.clear()
     for (var i = 0; i < plugins.length; i++) {
       empty(plugins[i].container)
       results[plugins[i].name] = []
@@ -37,6 +39,15 @@ const searchbarPlugins = {
         plugin: null,
         item: null
       }
+    }
+
+    // remove keys for this plugin's results
+    if (results[pluginName]) {
+      results[pluginName].forEach(function (result) {
+        if (result.urlKey) {
+          resultURLKeys.delete(result.urlKey)
+        }
+      })
     }
 
     results[pluginName] = []
@@ -73,6 +84,7 @@ const searchbarPlugins = {
 
     if (data.url) {
       data.urlKey = urlParser.removeTextFragment(data.url)
+      resultURLKeys.add(data.urlKey)
     }
 
     results[pluginName].push(data)
@@ -88,14 +100,10 @@ const searchbarPlugins = {
     }
 
     if (data.urlKey && !data.allowDuplicates) {
-      // skip duplicates
-      for (var plugin in results) {
-        for (var i = 0; i < results[plugin].length; i++) {
-          if (results[plugin][i].urlKey === data.urlKey && !results[plugin][i].allowDuplicates) {
-            return
-          }
-        }
+      if (resultURLKeys.has(data.urlKey)) {
+        return
       }
+      resultURLKeys.add(data.urlKey)
     }
 
     if (data.url && !data.click) {

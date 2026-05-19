@@ -21,7 +21,7 @@ var tagIndex = {
     tokens = tokens.filter(t => t.length > 2 && !generic.includes(t))
 
     //get unique tokens
-    tokens = tokens.filter((t, i) => tokens.indexOf(t) === i)
+    tokens = Array.from(new Set(tokens))
 
     return tokens
   },
@@ -92,7 +92,7 @@ var tagIndex = {
 
     var tokens = tagIndex.getPageTokens(page)
 
-    tokens.filter((t, i) => tokens.indexOf(t) === i).forEach(function (token) {
+    tokens.forEach(function (token) {
       if (tagIndex.termDocCounts[token]) {
         tagIndex.termDocCounts[token]--
       }
