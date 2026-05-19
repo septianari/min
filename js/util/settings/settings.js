@@ -1,5 +1,4 @@
 var settings = {
-  filePath: window.globalArgs['user-data-path'] + (process.platform === 'win32' ? '\\' : '/') + 'settings.json',
   list: {},
   onChangeCallbacks: [],
   runChangeCallbacks (key) {
@@ -31,19 +30,8 @@ var settings = {
     settings.runChangeCallbacks(key)
   },
   initialize: function () {
-    fs.readFile(settings.filePath, 'utf-8', function (err, fileData) {
-      if (err) {
-        if (err.code !== 'ENOENT') {
-          console.warn(err)
-        }
-      }
-
-      if (fileData) {
-        settings.list = JSON.parse(fileData)
-      }
-
-      settings.runChangeCallbacks()
-    })
+    settings.list = ipc.sendSync('getSettingsData')
+    settings.runChangeCallbacks()
 
     ipc.on('settingChanged', function (e, key, value) {
       settings.list[key] = value

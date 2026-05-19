@@ -19,8 +19,7 @@ db.version(1).stores({
   isBookmarked - whether the page is a bookmark
   extraData - other metadata about the page
   */
-  places: '++id, &url, title, color, visitCount, lastVisit, pageHTML, extractedText, *searchIndex, isBookmarked, *tags, metadata',
-  readingList: 'url, time, visitCount, pageHTML, article, extraData' // TODO remove this (reading list is no longer used)
+  places: '++id, &url, title, color, visitCount, lastVisit, *searchIndex, isBookmarked, *tags'
 })
 
 db.open().then(function () {

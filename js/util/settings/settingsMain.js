@@ -32,7 +32,14 @@ var settings = {
     /* eslint-enable no-inner-declarations */
 
     // eslint-disable-next-line no-return-assign
-    settings.fileWritePromise = ongoingFileWrite().then(newFileWrite).then(() => settings.fileWritePromise = null)
+    settings.fileWritePromise = ongoingFileWrite()
+      .then(newFileWrite)
+      .catch(function (err) {
+        console.warn('failed to write settings file', err)
+      })
+      .then(() => {
+        settings.fileWritePromise = null
+      })
   },
   runChangeCallbacks (key) {
     settings.onChangeCallbacks.forEach(function (listener) {
@@ -79,6 +86,10 @@ var settings = {
         console.warn('Error reading settings file:', e)
       }
     }
+
+    ipc.on('getSettingsData', function (e) {
+      e.returnValue = settings.list
+    })
 
     ipc.on('settingChanged', function (e, key, value) {
       settings.list[key] = value

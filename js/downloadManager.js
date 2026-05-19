@@ -1,5 +1,6 @@
 var webviews = require('webviews.js')
 const remoteMenu = require('remoteMenuRenderer.js')
+const dom = require('util/dom.js')
 
 function getFileSizeString (bytes) {
   const prefixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
@@ -81,36 +82,18 @@ const downloadManager = {
     }, 120 * 1000)
   },
   createItem: function (downloadItem) {
-    const container = document.createElement('div')
-    container.className = 'download-item'
-    container.setAttribute('role', 'listitem')
-    container.setAttribute('draggable', 'true')
+    const title = dom.createElement('div', { className: 'download-title', textContent: downloadItem.name })
+    const infoBox = dom.createElement('div', { className: 'download-info' })
+    const detailedInfoBox = dom.createElement('div', { className: 'download-info detailed' })
+    const progress = dom.createElement('div', { className: 'download-progress' })
+    const dropdown = dom.createElement('button', { className: 'download-action-button i carbon:chevron-down' })
+    const openFolder = dom.createElement('button', { className: 'download-action-button i carbon:folder', hidden: true })
 
-    const title = document.createElement('div')
-    title.className = 'download-title'
-    title.textContent = downloadItem.name
-    container.appendChild(title)
-
-    const infoBox = document.createElement('div')
-    infoBox.className = 'download-info'
-    container.appendChild(infoBox)
-
-    const detailedInfoBox = document.createElement('div')
-    detailedInfoBox.className = 'download-info detailed'
-    container.appendChild(detailedInfoBox)
-
-    const progress = document.createElement('div')
-    progress.className = 'download-progress'
-    container.appendChild(progress)
-
-    const dropdown = document.createElement('button')
-    dropdown.className = 'download-action-button i carbon:chevron-down'
-    container.appendChild(dropdown)
-
-    const openFolder = document.createElement('button')
-    openFolder.className = 'download-action-button i carbon:folder'
-    openFolder.hidden = true
-    container.appendChild(openFolder)
+    const container = dom.createElement('div', {
+      className: 'download-item',
+      role: 'listitem',
+      draggable: 'true'
+    }, [title, infoBox, detailedInfoBox, progress, dropdown, openFolder])
 
     container.addEventListener('click', function () {
       downloadManager.onItemClicked(downloadItem.path)

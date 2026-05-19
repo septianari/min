@@ -1,4 +1,5 @@
 var urlParser = require('util/urlParser.js')
+var dom = require('util/dom.js')
 
 var lastItemDeletion = Date.now() // TODO get rid of this
 
@@ -80,9 +81,7 @@ function createItem (data) {
   }
 
   if (data.icon) {
-    var el = document.createElement('i')
-    el.className = 'i ' + data.icon
-    item.appendChild(el)
+    item.appendChild(dom.createIcon(data.icon))
   }
 
   if (data.title) {
@@ -274,10 +273,10 @@ function createItem (data) {
 }
 
 function createHeading (data) {
-  var heading = document.createElement('h4')
-  heading.className = 'searchbar-heading'
-  heading.textContent = data.text || ''
-  return heading
+  return dom.createElement('h4', {
+    className: 'searchbar-heading',
+    textContent: data.text || ''
+  })
 }
 
 // attempts to shorten a page title, removing unimportant text like the site name

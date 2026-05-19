@@ -11,6 +11,7 @@ const urlParser = require('util/urlParser.js')
 const tabEditor = require('navbar/tabEditor.js')
 const progressBar = require('navbar/progressBar.js')
 const permissionRequests = require('navbar/permissionRequests.js')
+const dom = require('util/dom.js')
 
 var lastTabDeletion = 0 // TODO get rid of this
 
@@ -55,22 +56,21 @@ const tabBar = {
 
     // icons
 
-    var iconArea = document.createElement('span')
-    iconArea.className = 'tab-icon-area'
+    var iconArea = dom.createElement('span', { className: 'tab-icon-area' })
 
     if (data.private) {
-      var pbIcon = document.createElement('i')
-      pbIcon.className = 'icon-tab-is-private tab-icon tab-info-icon i carbon:view-off'
-      iconArea.appendChild(pbIcon)
+      iconArea.appendChild(dom.createElement('i', {
+        className: 'icon-tab-is-private tab-icon tab-info-icon i carbon:view-off'
+      }))
     }
 
-    var closeTabButton = document.createElement('button')
-    closeTabButton.className = 'tab-icon tab-close-button i carbon:close'
-
-    closeTabButton.addEventListener('click', function (e) {
-      tabBar.events.emit('tab-closed', data.id)
-      // prevent the searchbar from being opened
-      e.stopPropagation()
+    var closeTabButton = dom.createButton({
+      className: 'tab-icon tab-close-button i carbon:close',
+      onClick: function (e) {
+        tabBar.events.emit('tab-closed', data.id)
+        // prevent the searchbar from being opened
+        e.stopPropagation()
+      }
     })
 
     iconArea.appendChild(closeTabButton)
@@ -190,10 +190,10 @@ const tabBar = {
     if (tabData.secure === true && insecureIcon) {
       insecureIcon.remove()
     } else if (tabData.secure === false && !insecureIcon) {
-      var insecureIcon = document.createElement('i')
-      insecureIcon.className = 'icon-tab-not-secure tab-icon tab-info-icon i carbon:unlocked'
-      insecureIcon.title = l('connectionNotSecure')
-      iconArea.appendChild(insecureIcon)
+      iconArea.appendChild(dom.createElement('i', {
+        className: 'icon-tab-not-secure tab-icon tab-info-icon i carbon:unlocked',
+        title: l('connectionNotSecure')
+      }))
     }
   },
   updateAll: function () {
