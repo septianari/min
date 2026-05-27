@@ -1,4 +1,5 @@
 const currrentDownloadItems = {}
+const reportDownloadMetadataByURL = new Map()
 
 ipc.on('cancelDownload', function (e, path) {
   if (currrentDownloadItems[path]) {
@@ -22,18 +23,96 @@ function getHeaderString (headerValue) {
   return headerValue || ''
 }
 
-function getLikelyAttachmentExtension (url, contentDispositionHeader) {
-  function getFileExtension (value) {
-    const idx = value.lastIndexOf('.')
-    if (idx < 0) {
-      return ''
-    }
-    return value.slice(idx).toLowerCase()
+function getFileExtension (value) {
+  const idx = value.lastIndexOf('.')
+  if (idx < 0) {
+    return ''
+  }
+  return value.slice(idx).toLowerCase()
+}
+
+function normalizeExtension (extension) {
+  if (!extension) {
+    return ''
   }
 
+  return extension.startsWith('.') ? extension.toLowerCase() : ('.' + extension.toLowerCase())
+}
+
+function parseFilenameFromContentDisposition (headerValue) {
+  const disposition = getHeaderString(headerValue)
+
+  const encodedFilenameMatch = disposition.match(/filename\*=utf-8''([^;]+)/i)
+  if (encodedFilenameMatch && encodedFilenameMatch[1]) {
+    try {
+      return decodeURIComponent(encodedFilenameMatch[1].replace(/"/g, '').trim())
+    } catch (e) {}
+  }
+
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i)
+  if (filenameMatch && filenameMatch[1]) {
+    return filenameMatch[1].trim()
+  }
+
+  return ''
+}
+
+function getExtensionFromMimeType (mimeType) {
+  const normalizedMimeType = (mimeType || '').split(';')[0].trim().toLowerCase()
+
+  const mimeTypeToExtension = {
+    'application/msword': '.doc',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    'application/vnd.ms-excel': '.xls',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+    'application/vnd.ms-powerpoint': '.ppt',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+    'application/pdf': '.pdf',
+    'text/csv': '.csv',
+    'text/plain': '.txt',
+    'text/html': '.html',
+    'application/xhtml+xml': '.html',
+    'application/rtf': '.rtf',
+    'text/rtf': '.rtf',
+    'application/xml': '.xml',
+    'text/xml': '.xml',
+    'application/json': '.json',
+    'application/zip': '.zip'
+  }
+
+  return mimeTypeToExtension[normalizedMimeType] || ''
+}
+
+function buildSaveDialogFilters (extension, mimeType) {
+  const normalizedExtension = normalizeExtension(extension)
+  const extensions = []
+
+  if (normalizedExtension) {
+    extensions.push(normalizedExtension.slice(1))
+  }
+
+  const filterName = (mimeType || '').split(';')[0].trim() || 'File'
+
+  if (extensions.length === 0) {
+    return undefined
+  }
+
+  return [
+    {
+      name: filterName,
+      extensions
+    },
+    {
+      name: 'All Files',
+      extensions: ['*']
+    }
+  ]
+}
+
+function getLikelyAttachmentExtension (url, contentDispositionHeader) {
   const disposition = getHeaderString(contentDispositionHeader).toLowerCase()
 
-  const filenameMatch = disposition.match(/filename\*?=(?:utf-8''|")?([^\";]+)/i)
+  const filenameMatch = disposition.match(/filename\*?=(?:utf-8''|")?([^";]+)/i)
   if (filenameMatch && filenameMatch[1]) {
     const filename = filenameMatch[1].replace(/"/g, '')
     const cleanFilename = filename.split('?')[0].split('#')[0]
@@ -105,7 +184,38 @@ function isInlineHTMLReportDownload (item) {
 }
 
 function sanitizeFilenameForWindows (filename) {
-  return filename.replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_')
+  const reservedCharacters = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*'])
+
+  return Array.from(filename, function (character) {
+    if (reservedCharacters.has(character) || character.charCodeAt(0) < 32) {
+      return '_'
+    }
+
+    return character
+  }).join('')
+}
+
+function getSuggestedDownloadInfo (item) {
+  const url = item.getURL() || ''
+  const reportMetadata = reportDownloadMetadataByURL.get(url)
+  const mimeType = reportMetadata?.mimeType || (item.getMimeType ? item.getMimeType() : '')
+
+  let filename = reportMetadata?.filename || item.getFilename() || 'report'
+  filename = sanitizeFilenameForWindows(filename)
+
+  let extension = getFileExtension(filename)
+
+  if (!extension) {
+    extension = normalizeExtension(reportMetadata?.extension || getExtensionFromMimeType(mimeType))
+    if (extension) {
+      filename += extension
+    }
+  }
+
+  return {
+    filename,
+    filters: buildSaveDialogFilters(extension, mimeType)
+  }
 }
 
 function downloadHandler (event, item, webContents) {
@@ -152,12 +262,26 @@ function downloadHandler (event, item, webContents) {
     return true
   }
 
+  const suggestedDownload = getSuggestedDownloadInfo(item)
+
+  if (item.setSaveDialogOptions) {
+    const saveDialogOptions = {
+      defaultPath: suggestedDownload.filename
+    }
+
+    if (suggestedDownload.filters) {
+      saveDialogOptions.filters = suggestedDownload.filters
+    }
+
+    item.setSaveDialogOptions(saveDialogOptions)
+  }
+
   var savePathFilename
 
   // send info to download manager
   sendIPCToWindow(sourceWindow, 'download-info', {
     path: item.getSavePath(),
-    name: item.getFilename(),
+    name: suggestedDownload.filename,
     status: 'progressing',
     size: { received: 0, total: item.getTotalBytes() }
   })
@@ -180,6 +304,7 @@ function downloadHandler (event, item, webContents) {
   })
 
   item.once('done', function (e, state) {
+    reportDownloadMetadataByURL.delete(item.getURL() || '')
     delete currrentDownloadItems[item.getSavePath()]
     sendIPCToWindow(sourceWindow, 'download-info', {
       path: item.getSavePath(),
@@ -196,6 +321,15 @@ function listenForDownloadHeaders (ses) {
     if (details.responseHeaders && isReportEndpointURL(details.url)) {
       const typeHeader = getHeaderValues(details.responseHeaders, 'content-type')
       const contentDispositionHeader = getHeaderValues(details.responseHeaders, 'content-disposition')
+      const filename = parseFilenameFromContentDisposition(contentDispositionHeader)
+      const extension = getFileExtension(filename) || getExtensionFromMimeType(getHeaderString(typeHeader))
+
+      reportDownloadMetadataByURL.set(details.url, {
+        filename,
+        extension,
+        mimeType: getHeaderString(typeHeader)
+      })
+
       const filteredHeaders = Object.fromEntries(
         Object.entries(details.responseHeaders).filter(([key]) => key.toLowerCase() !== 'content-disposition')
       )
