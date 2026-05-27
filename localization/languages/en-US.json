@@ -183,6 +183,7 @@
     "settingsAdditionalFeaturesHeading": "Additional Features",
     "settingsUserscriptsToggle": "Enable user scripts",
     "settingsShowDividerToggle": "Show divider between tabs",
+    "settingsShowTabFaviconsToggle": "Show website icons in tabs",
     "settingsLanguageSelection": "Language: ",
     "settingsSeparateTitlebarToggle": "Use separate title bar",
     "settingsSpellcheckToggle": "Enable spell check",

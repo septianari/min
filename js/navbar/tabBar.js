@@ -82,6 +82,10 @@ const tabBar = {
     var titleContainer = document.createElement('div')
     titleContainer.className = 'title-container'
 
+    var favicon = document.createElement('img')
+    favicon.className = 'tab-favicon'
+    favicon.hidden = true
+
     var title = document.createElement('span')
     title.className = 'title'
 
@@ -90,6 +94,7 @@ const tabBar = {
     var urlElement = document.createElement('span')
     urlElement.className = 'url-element'
 
+    titleContainer.appendChild(favicon)
     titleContainer.appendChild(title)
     titleContainer.appendChild(urlElement)
 
@@ -155,6 +160,18 @@ const tabBar = {
 
     var titleEl = tabEl.querySelector('.title')
     titleEl.textContent = tabTitle
+
+    var faviconEl = tabEl.querySelector('.tab-favicon')
+    var shouldShowFavicon = settings.get('showTabFavicons') === true && tabData.favicon && tabData.favicon.url
+    if (shouldShowFavicon) {
+      faviconEl.src = tabData.favicon.url
+      faviconEl.hidden = false
+      tabEl.querySelector('.title-container').classList.add('has-favicon')
+    } else {
+      faviconEl.removeAttribute('src')
+      faviconEl.hidden = true
+      tabEl.querySelector('.title-container').classList.remove('has-favicon')
+    }
 
     tabEl.title = tabTitle
     if (tabData.private) {
@@ -290,10 +307,22 @@ webviews.bindEvent('did-stop-loading', function (tabId) {
 })
 
 tasks.on('tab-updated', function (id, key) {
-  var updateKeys = ['title', 'secure', 'url', 'muted', 'hasAudio']
+  var updateKeys = ['title', 'secure', 'url', 'muted', 'hasAudio', 'favicon']
   if (updateKeys.includes(key)) {
     tabBar.updateTab(id)
   }
+})
+
+settings.listen('showTabFavicons', function () {
+  if (typeof tabs === 'undefined') {
+    return
+  }
+
+  tabs.get().forEach(function (tab) {
+    if (tabBar.getTab(tab.id)) {
+      tabBar.updateTab(tab.id)
+    }
+  })
 })
 
 permissionRequests.onChange(function (tabId) {

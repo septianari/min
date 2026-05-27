@@ -266,6 +266,18 @@ body:not(.touch)
   flex: 1;
   overflow: hidden;
 }
+.tab-item .tab-favicon {
+  position: absolute;
+  top: 10px;
+  left: 0.25rem;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 2px;
+}
+.tab-item .tab-favicon[hidden] {
+  display: none;
+}
 .compact-tabs .tab-item .title {
   font-size: 14px;
 }
@@ -273,21 +285,29 @@ body:not(.touch)
   display: block;
   position: absolute;
   top: 0;
+  left: 0.25rem;
   font-size: 15px;
   transform-origin: left 10%;
   transition: 0.15s transform;
   white-space: nowrap;
 }
+.tab-item .title-container.has-favicon .title {
+  left: 1.55rem;
+}
 .tab-item .url-element {
   display: block;
   position: absolute;
   top: 5px;
+  left: 0.25rem;
   transform-origin: left 90%;
   transform: translateY(15%);
   opacity: 0;
   transition: 0.15s all;
   font-size: 13px;
   white-space: nowrap;
+}
+.tab-item .title-container.has-favicon .url-element {
+  left: 1.55rem;
 }
 .tab-item.has-url:hover .url-element {
   transform: none;

@@ -4,6 +4,7 @@ var contentTypeBlockingContainer = document.getElementById('content-type-blockin
 var banner = document.getElementById('restart-required-banner')
 var siteThemeCheckbox = document.getElementById('checkbox-site-theme')
 var showDividerCheckbox = document.getElementById('checkbox-show-divider')
+var showTabFaviconsCheckbox = document.getElementById('checkbox-show-tab-favicons')
 var clearHistoryOnExitCheckbox = document.getElementById('checkbox-clear-history-on-exit')
 var clearBrowsingDataButton = document.getElementById('clear-browsing-data-button')
 var clearBrowsingDataStatus = document.getElementById('clear-browsing-data-status')
@@ -386,6 +387,16 @@ settings.get('showDividerBetweenTabs', function (value) {
 
 showDividerCheckbox.addEventListener('change', function (e) {
   settings.set('showDividerBetweenTabs', this.checked)
+})
+
+/* show tab favicons setting */
+
+settings.get('showTabFavicons', function (value) {
+  showTabFaviconsCheckbox.checked = value === true
+})
+
+showTabFaviconsCheckbox.addEventListener('change', function (e) {
+  settings.set('showTabFavicons', this.checked)
 })
 
 /* language setting*/

@@ -181,6 +181,7 @@
     "settingsAdditionalFeaturesHeading": "Fitur Tambahan",
     "settingsUserscriptsToggle": "Aktifkan user script",
     "settingsShowDividerToggle": "Tampilkan pemisah antara tab",
+    "settingsShowTabFaviconsToggle": "Tampilkan icon web",
     "settingsLanguageSelection": null, //missing translation
     "settingsSeparateTitlebarToggle": "Gunakan bilah judul terpisah",
     "settingsSpellcheckToggle": "Aktifkan pemeriksa ejaan",
