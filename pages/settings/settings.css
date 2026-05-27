@@ -210,17 +210,33 @@ html {
 
 #custom-bangs {
   list-style: none;
+  padding-left: 0;
 }
 
 #custom-bangs li {
   padding: 0.25em 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
 }
 
 #custom-bangs input {
-  margin-right: 0.5em;
-  width: 28%;
-  max-width: 225px;
   padding: 0.2em;
+  font-size: 1rem;
+}
+
+#custom-bangs input:nth-child(1) {
+  flex: 0 0 15%;
+  min-width: 80px;
+  max-width: 150px;
+}
+
+#custom-bangs input:nth-child(2) {
+  flex: 1 1 35%;
+}
+
+#custom-bangs input:nth-child(3) {
+  flex: 1 1 45%;
 }
 
 #add-custom-bang {
