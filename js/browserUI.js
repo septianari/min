@@ -294,11 +294,10 @@ searchbar.events.on('url-selected', function (data) {
         const basicUrl = urlParser.basicURL(data.url)
         matchedBang = customBangs.find(bang => {
           if (!bang.redirect || !bang.snippet) return false
-          if (bang.redirect.includes('%s')) {
-            const baseUrl = bang.redirect.split('%s')[0]
-            return basicUrl.startsWith(urlParser.basicURL(baseUrl))
-          }
-          return basicUrl === urlParser.basicURL(bang.redirect)
+          const basicRedirect = urlParser.basicURL(bang.redirect.replace('%s', ''))
+          // Check if the current URL starts with the redirect URL defined in custom commands
+          // This allows "github.com/login" to match a custom command for "github.com"
+          return basicUrl.startsWith(basicRedirect)
         })
       }
     }
