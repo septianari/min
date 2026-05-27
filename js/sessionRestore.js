@@ -32,13 +32,9 @@ const sessionRestore = {
       })
     }
 
-    //if startupTabOption is "open a new blank task", don't save any tabs in the current task
+    //if startupTabOption is "open a new blank task", don't save any tasks
     if (settings.get('startupTabOption') === 3) {
-      for (var i = 0; i < data.state.tasks.length; i++) {
-        if (tasks.get(data.state.tasks[i].id).selectedInWindow) { //need to re-fetch the task because temporary properties have been removed
-          data.state.tasks[i].tabs = []
-        }
-      }
+      data.state.tasks = []
     }
 
     if (forceSave === true || stateString !== sessionRestore.previousState) {
@@ -89,16 +85,22 @@ const sessionRestore = {
       */
 
       try {
-        // first run, show the tour
-        if (!savedStringData) {
+        // first run, show the tour, or user chose "open a new blank task"
+        if (!savedStringData || startupConfigOption === 3) {
           tasks.setSelected(tasks.add()) // create a new task
 
-          var newTab = tasks.getSelected().tabs.add({
-            url: 'https://minbrowser.github.io/min/tour'
-          })
-          browserUI.addTab(newTab, {
-            enterEditMode: false
-          })
+          if (!savedStringData) {
+            var newTab = tasks.getSelected().tabs.add({
+              url: 'https://minbrowser.github.io/min/tour'
+            })
+            browserUI.addTab(newTab, {
+              enterEditMode: false
+            })
+          } else {
+            browserUI.addTab(tasks.getSelected().tabs.add(), {
+              enterEditMode: true
+            })
+          }
           return
         }
 
