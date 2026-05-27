@@ -221,7 +221,18 @@ function initialize () {
         // isAction: true - skip search text entry if the bang does not include a search parameter
         isAction: !bang.redirect.includes('%s'),
         fn: function (text) {
-          searchbar.openURL(bang.redirect.replace('%s', encodeURIComponent(text)))
+          const url = bang.redirect.replace('%s', encodeURIComponent(text))
+          if (bang.snippet) {
+            tabs.update(tabs.getSelected(), {
+              title: bang.snippet,
+              persistentTitle: true
+            })
+          } else {
+            tabs.update(tabs.getSelected(), {
+              persistentTitle: false
+            })
+          }
+          searchbar.openURL(url, null, { fromBang: true })
         }
       })
     })

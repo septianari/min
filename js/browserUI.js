@@ -287,6 +287,32 @@ searchbar.events.on('url-selected', function (data) {
       openInBackground: true
     })
   } else {
+    let matchedBang = null
+    if (!data.fromBang) {
+      const customBangs = settings.get('customBangs')
+      if (customBangs) {
+        const basicUrl = urlParser.basicURL(data.url)
+        matchedBang = customBangs.find(bang => {
+          if (!bang.redirect || !bang.snippet) return false
+          if (bang.redirect.includes('%s')) {
+            const baseUrl = bang.redirect.split('%s')[0]
+            return basicUrl.startsWith(urlParser.basicURL(baseUrl))
+          }
+          return basicUrl === urlParser.basicURL(bang.redirect)
+        })
+      }
+    }
+
+    if (matchedBang && matchedBang.snippet) {
+      tabs.update(tabs.getSelected(), {
+        title: matchedBang.snippet,
+        persistentTitle: true
+      })
+    } else if (!data.fromBang) {
+      tabs.update(tabs.getSelected(), {
+        persistentTitle: false
+      })
+    }
     webviews.update(tabs.getSelected(), data.url)
     tabEditor.hide()
   }

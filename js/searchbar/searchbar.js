@@ -36,7 +36,7 @@ var searchbar = {
   showResults: function (text, inputFlags = {}) {
     searchbarPlugins.run(text, searchbar.associatedInput, inputFlags)
   },
-  openURL: function (url, event) {
+  openURL: function (url, event, options) {
     var hasURLHandler = searchbarPlugins.runURLHandlers(url)
     if (hasURLHandler) {
       return
@@ -46,7 +46,7 @@ var searchbar = {
       openURLInBackground(url)
       return true
     } else {
-      searchbar.events.emit('url-selected', { url: url, background: false })
+      searchbar.events.emit('url-selected', Object.assign({ url: url, background: false }, options || {}))
       // focus the webview, so that autofocus inputs on the page work
       webviews.focus()
       return false

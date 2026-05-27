@@ -463,6 +463,9 @@ webviews.bindEvent('did-navigate', function (tabId, url, httpResponseCode, httpS
 webviews.bindEvent('did-finish-load', onPageLoad)
 
 webviews.bindEvent('page-title-updated', function (tabId, title, explicitSet) {
+  if (tabs.get(tabId).persistentTitle) {
+    return
+  }
   tabs.update(tabId, {
     title: title
   })
