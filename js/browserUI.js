@@ -251,7 +251,7 @@ webviews.bindEvent('new-tab', function (tabId, url, openInForeground) {
   var newTab = tabs.add({
     url: url,
     private: tabs.get(tabId).private // inherit private status from the current tab
-  })
+  }, { atEnd: false })
 
   addTab(newTab, {
     enterEditMode: false,

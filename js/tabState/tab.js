@@ -31,7 +31,7 @@ class TabList {
       hasWebContents: false,
     }
 
-    if (options.atEnd) {
+    if (options.atEnd !== false) {
       this.tabs.push(newTab)
     } else {
       this.tabs.splice(this.getSelectedIndex() + 1, 0, newTab)
