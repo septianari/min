@@ -18,6 +18,13 @@ var addTaskButton = document.getElementById('add-task')
 var addTaskLabel = addTaskButton.querySelector('span')
 var taskOverlayNavbar = document.getElementById('task-overlay-navbar')
 
+function addBlankTabToTask (task) {
+  var newTab = task.tabs.add({ selected: task.id === tasks.getSelected().id })
+  webviews.add(newTab)
+
+  return newTab
+}
+
 function addTaskFromMenu () {
   /* new tasks can't be created in modal mode */
   if (modalMode.enabled()) {
@@ -55,12 +62,17 @@ function deleteTabFromOverlay (item) {
 
   tabBar.updateAll()
 
-  // if there are no tabs left, remove the task
+  // if there are no tabs left, remove the task unless it is pinned
   if (task.tabs.count() === 0) {
-    // remove the task element from the overlay
-    getTaskContainer(task.id).remove()
-    // close the task
-    browserUI.closeTask(task.id)
+    if (task.pinned) {
+      addBlankTabToTask(task)
+      taskOverlay.render()
+    } else {
+      // remove the task element from the overlay
+      getTaskContainer(task.id).remove()
+      // close the task
+      browserUI.closeTask(task.id)
+    }
   }
 
   if (itemIsFocused && successorTab) {
@@ -154,11 +166,15 @@ var taskOverlay = {
             oldTab.selected = false
           }
 
-          // if the old task has no tabs left in it, destroy it
+          // if the old task has no tabs left in it, destroy it unless it is pinned
 
           if (previousTask.tabs.count() === 0) {
-            browserUI.closeTask(previousTask.id)
-            getTaskContainer(previousTask.id).remove()
+            if (previousTask.pinned) {
+              addBlankTabToTask(previousTask)
+            } else {
+              browserUI.closeTask(previousTask.id)
+              getTaskContainer(previousTask.id).remove()
+            }
           }
 
           if (e.to === addTaskButton) {
@@ -255,7 +271,10 @@ var taskOverlay = {
 
       var pendingDeleteTasks = document.body.querySelectorAll('.task-container.deleting')
       for (var i = 0; i < pendingDeleteTasks.length; i++) {
-        browserUI.closeTask(pendingDeleteTasks[i].getAttribute('data-task'))
+        var task = tasks.get(pendingDeleteTasks[i].getAttribute('data-task'))
+        if (task && !task.pinned) {
+          browserUI.closeTask(task.id)
+        }
       }
 
       // if the current tab has been deleted, switch to the most recent one

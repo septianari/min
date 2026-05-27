@@ -2,6 +2,7 @@ var browserUI = require('browserUI.js')
 var searchbarUtils = require('searchbar/searchbarUtils.js')
 var urlParser = require('util/urlParser.js')
 var searchEngine = require('util/searchEngine.js')
+var settings = require('util/settings/settings.js')
 
 const faviconMinimumLuminance = 70 // minimum brightness for a "light" favicon
 
@@ -25,7 +26,7 @@ function getTaskRelativeDate (task) {
 }
 
 function toggleCollapsed (taskContainer, task) {
-  tasks.update(task.id, {collapsed: !tasks.isCollapsed(task.id)})
+  tasks.update(task.id, { collapsed: !tasks.isCollapsed(task.id) })
   taskContainer.classList.toggle('collapsed')
 
   var collapseButton = taskContainer.querySelector('.task-collapse-button')
@@ -76,7 +77,7 @@ var TaskOverlayBuilder = {
             this.blur()
           }
 
-          tasks.update(task.id, {name: this.value})
+          tasks.update(task.id, { name: this.value })
         })
 
         input.addEventListener('focusin', function (e) {
@@ -92,8 +93,13 @@ var TaskOverlayBuilder = {
         var deleteButton = document.createElement('button')
         deleteButton.className = 'task-delete-button i carbon:trash-can'
         deleteButton.tabIndex = -1 // needed for keyboardNavigationHelper
+        deleteButton.disabled = task.pinned
 
         deleteButton.addEventListener('click', function (e) {
+          if (task.pinned) {
+            return
+          }
+
           if (task.tabs.isEmpty()) {
             container.remove()
             browserUI.closeTask(task.id)
@@ -124,6 +130,29 @@ var TaskOverlayBuilder = {
         return deleteWarning
       },
 
+      pinButton: function (task) {
+        var pinButton = document.createElement('button')
+        pinButton.className = 'task-pin-button i'
+        if (task.pinned) {
+          pinButton.classList.add('carbon:pin-filled')
+        } else {
+          pinButton.classList.add('carbon:pin')
+        }
+        pinButton.tabIndex = -1
+
+        pinButton.addEventListener('click', function (e) {
+          e.stopPropagation()
+          tasks.update(task.id, { pinned: !task.pinned })
+          pinButton.classList.toggle('carbon:pin')
+          pinButton.classList.toggle('carbon:pin-filled')
+
+          var deleteButton = pinButton.parentNode.querySelector('.task-delete-button')
+          if (deleteButton) {
+            deleteButton.disabled = task.pinned
+          }
+        })
+        return pinButton
+      },
       actionContainer: function (taskContainer, task, taskIndex) {
         var taskActionContainer = document.createElement('div')
         taskActionContainer.className = 'task-action-container'
@@ -135,6 +164,12 @@ var TaskOverlayBuilder = {
         // add the input for the task name
         var input = this.nameInputField(task, taskIndex)
         taskActionContainer.appendChild(input)
+
+        // add the pin button
+        // if (settings.get('startupTabOption') === 3) {
+          var pinButton = this.pinButton(task)
+          taskActionContainer.appendChild(pinButton)
+        // }
 
         // add the delete button
         var deleteButton = this.deleteButton(taskContainer, task)

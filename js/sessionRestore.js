@@ -32,9 +32,11 @@ const sessionRestore = {
       })
     }
 
-    //if startupTabOption is "open a new blank task", don't save any tasks
+    //if startupTabOption is "open a new blank task", don't save any tasks (except pinned ones)
     if (settings.get('startupTabOption') === 3) {
-      data.state.tasks = []
+      data.state.tasks = data.state.tasks.filter(function (taskData) {
+        return tasks.get(taskData.id).pinned
+      })
     }
 
     if (forceSave === true || stateString !== sessionRestore.previousState) {
@@ -85,22 +87,16 @@ const sessionRestore = {
       */
 
       try {
-        // first run, show the tour, or user chose "open a new blank task"
-        if (!savedStringData || startupConfigOption === 3) {
+        // first run, show the tour
+        if (!savedStringData) {
           tasks.setSelected(tasks.add()) // create a new task
 
-          if (!savedStringData) {
-            var newTab = tasks.getSelected().tabs.add({
-              url: 'https://minbrowser.github.io/min/tour'
-            })
-            browserUI.addTab(newTab, {
-              enterEditMode: false
-            })
-          } else {
-            browserUI.addTab(tasks.getSelected().tabs.add(), {
-              enterEditMode: true
-            })
-          }
+          var newTab = tasks.getSelected().tabs.add({
+            url: 'https://minbrowser.github.io/min/tour'
+          })
+          browserUI.addTab(newTab, {
+            enterEditMode: false
+          })
           return
         }
 
@@ -112,6 +108,11 @@ const sessionRestore = {
 
           browserUI.addTab(tasks.getSelected().tabs.add())
           return
+        }
+
+        // if startupTabOption is "open a new blank task", only restore pinned tasks
+        if (startupConfigOption === 3) {
+          data.state.tasks = data.state.tasks.filter(task => task.pinned)
         }
 
         // add the saved tasks
@@ -127,6 +128,15 @@ const sessionRestore = {
             tasks.get(task.id).tabs.add()
           }
         })
+
+        if (startupConfigOption === 3) {
+          tasks.setSelected(tasks.add())
+          browserUI.addTab(tasks.getSelected().tabs.add(), {
+            enterEditMode: true
+          })
+          window.createdNewTaskOnStartup = true
+          return
+        }
 
         var mostRecentTasks = tasks.slice().sort((a, b) => {
           return tasks.getLastActivity(b.id) - tasks.getLastActivity(a.id)

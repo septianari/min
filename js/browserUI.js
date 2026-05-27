@@ -112,11 +112,15 @@ function moveTabRight (tabId = tabs.getSelected()) {
 function destroyTask (id) {
   var task = tasks.get(id)
 
+  if (!task || task.pinned) {
+    return false
+  }
+
   task.tabs.forEach(function (tab) {
     webviews.destroy(tab.id)
   })
 
-  tasks.destroy(id)
+  return tasks.destroy(id)
 }
 
 /* destroys the webview and tab element for a tab */
@@ -131,7 +135,9 @@ function destroyTab (id) {
 function closeTask (taskId) {
   var previousCurrentTask = tasks.getSelected().id
 
-  destroyTask(taskId)
+  if (destroyTask(taskId) === false) {
+    return false
+  }
 
   if (taskId === previousCurrentTask) {
     // the current task was destroyed, find another task to switch to
@@ -342,13 +348,19 @@ tabBar.events.on('tab-closed', function (id) {
 function deleteAllTasks () {
   if (confirm(l('deleteAllTasksConfirmation'))) {
     tasks.forEach(function (task) {
+      if (task.pinned) {
+        return
+      }
+
       task.tabs.forEach(function (tab) {
         webviews.destroy(tab.id)
       })
     })
 
-    while (tasks.getLength() > 0) {
-      tasks.destroy(tasks.byIndex(0).id)
+    for (var i = tasks.getLength() - 1; i >= 0; i--) {
+      if (!tasks.byIndex(i).pinned) {
+        tasks.destroy(tasks.byIndex(i).id)
+      }
     }
 
     addTask()

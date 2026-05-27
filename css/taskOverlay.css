@@ -210,7 +210,7 @@ body:not(.touch)
   display: none;
 }
 
-.task-delete-button {
+.task-delete-button, .task-pin-button {
   margin: auto 0 auto 0.25em;
   border-radius: 50%;
   height: 2em;
@@ -220,8 +220,19 @@ body:not(.touch)
   font-size: 1.2em !important;
 }
 
-.task-container.collapsed:not(:hover) .task-delete-button:not(:focus) {
+.task-container.collapsed:not(:hover) .task-delete-button:not(:focus),
+.task-container.collapsed:not(:hover) .task-pin-button:not(:focus) {
   opacity: 0;
+}
+
+.task-pin-button.carbon\:pin-filled {
+  color: royalblue;
+  opacity: 1;
+}
+
+.task-delete-button:disabled {
+  cursor: default;
+  opacity: 0.25;
 }
 
 .task-action-container button:hover,

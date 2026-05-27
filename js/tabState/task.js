@@ -40,6 +40,7 @@ class TaskList {
       collapsed: task.collapsed, // this property must stay undefined if it is already (since there is a difference between "explicitly uncollapsed" and "never collapsed")
       id: task.id || String(TaskList.getRandomId()),
       selectedInWindow: task.selectedInWindow || null,
+      pinned: task.pinned || false
     }
 
     if (index) {
