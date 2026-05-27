@@ -11,6 +11,45 @@ var tabBar = require('navbar/tabBar.js')
 var tabEditor = require('navbar/tabEditor.js')
 var searchbar = require('searchbar/searchbar.js')
 
+function updateTabTitleFromCustomCommands (tabId) {
+  const tab = tabs.get(tabId)
+  if (!tab || !tab.url) return
+
+  const customBangs = settings.get('customBangs')
+  if (!customBangs) {
+    tabs.update(tabId, { persistentTitle: false })
+    return
+  }
+
+  const basicUrl = urlParser.basicURL(tab.url)
+  const matchedBang = customBangs.find(bang => {
+    if (!bang.redirect || !bang.snippet) return false
+    const basicRedirect = urlParser.basicURL(bang.redirect.replace('%s', ''))
+    return basicUrl.startsWith(basicRedirect)
+  })
+
+  if (matchedBang && matchedBang.snippet) {
+    tabs.update(tabId, {
+      title: matchedBang.snippet,
+      persistentTitle: true
+    })
+  } else {
+    tabs.update(tabId, {
+      persistentTitle: false
+    })
+  }
+}
+
+tasks.on('tab-added', function (id) {
+  updateTabTitleFromCustomCommands(id)
+})
+
+tasks.on('tab-updated', function (id, key) {
+  if (key === 'url') {
+    updateTabTitleFromCustomCommands(id)
+  }
+})
+
 /* creates a new task */
 
 function addTask () {
@@ -287,31 +326,6 @@ searchbar.events.on('url-selected', function (data) {
       openInBackground: true
     })
   } else {
-    let matchedBang = null
-    if (!data.fromBang) {
-      const customBangs = settings.get('customBangs')
-      if (customBangs) {
-        const basicUrl = urlParser.basicURL(data.url)
-        matchedBang = customBangs.find(bang => {
-          if (!bang.redirect || !bang.snippet) return false
-          const basicRedirect = urlParser.basicURL(bang.redirect.replace('%s', ''))
-          // Check if the current URL starts with the redirect URL defined in custom commands
-          // This allows "github.com/login" to match a custom command for "github.com"
-          return basicUrl.startsWith(basicRedirect)
-        })
-      }
-    }
-
-    if (matchedBang && matchedBang.snippet) {
-      tabs.update(tabs.getSelected(), {
-        title: matchedBang.snippet,
-        persistentTitle: true
-      })
-    } else if (!data.fromBang) {
-      tabs.update(tabs.getSelected(), {
-        persistentTitle: false
-      })
-    }
     webviews.update(tabs.getSelected(), data.url)
     tabEditor.hide()
   }
