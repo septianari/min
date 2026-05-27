@@ -77,7 +77,8 @@ function changeBlockingLevelSetting (level) {
 }
 
 function setExceptionInputSize () {
-  blockingExceptionsInput.style.height = (blockingExceptionsInput.scrollHeight + 2) + 'px'
+  blockingExceptionsInput.style.height = 'auto'
+  blockingExceptionsInput.style.height = blockingExceptionsInput.scrollHeight + 'px'
 }
 
 settings.get('filtering', function (value) {

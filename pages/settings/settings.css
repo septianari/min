@@ -189,6 +189,9 @@ html {
 }
 
 #content-blocking-information textarea {
+  box-sizing: border-box;
+  min-height: 2em;
+  overflow: hidden;
   vertical-align: text-bottom;
   resize: vertical;
 }
