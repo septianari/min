@@ -2,9 +2,9 @@
   "name": "min",
   "productName": "Min",
   "author": "PalmerAL",
-  "version": "1.2.8",
+  "version": "1.3.0",
   "description": "A fast, minimal browser that protects your privacy",
-  "electronVersion": "43.0.0",
+  "electronVersion": "43.1.0",
   "main": "main.build.js",
   "standard": {
     "globals": [
@@ -86,5 +86,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/minbrowser/min.git"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true
   }
 }
