@@ -1,1 +1,2 @@
 @@/browserinfo$domain=accounts.google.com
+@@||accounts.google.com/gsi/log
