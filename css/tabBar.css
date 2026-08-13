@@ -347,11 +347,15 @@ body.windows.dark-theme .navbar-action-button:not(:disabled):hover {
   align-items: center;
 }
 
-#zoom-indicator {
+.tab-zoom-indicator,
+.tab-copy-page-url-notification {
+  align-self: center;
+  flex: none;
   font-size: 13px;
   font-weight: 600;
-  margin-right: 8px;
+  line-height: 1;
   opacity: 0.6;
+  white-space: nowrap;
 }
 
 .navbar-right-actions #add-tab-button {

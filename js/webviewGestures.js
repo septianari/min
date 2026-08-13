@@ -31,7 +31,7 @@ var webviewGestures = {
     webviews.callAsync(tabId, 'zoomFactor', function (err, oldFactor) {
       const newFactor = Math.min(webviewMaxZoom, Math.max(webviewMinZoom, oldFactor + amt))
       webviews.callAsync(tabId, 'zoomFactor', newFactor)
-      webviewGestures.showZoomIndicator(newFactor)
+      webviewGestures.showZoomIndicator(tabId, newFactor)
     })
   },
   zoomWebviewIn: function (tabId) {
@@ -42,11 +42,22 @@ var webviewGestures = {
   },
   resetWebviewZoom: function (tabId) {
     webviews.callAsync(tabId, 'zoomFactor', 1.0)
-    webviewGestures.showZoomIndicator(1.0)
+    webviewGestures.showZoomIndicator(tabId, 1.0)
   },
   zoomIndicatorTimeout: null,
-  showZoomIndicator: function (factor) {
-    const el = document.getElementById('zoom-indicator')
+  showZoomIndicator: function (tabId, factor) {
+    document.querySelectorAll('.tab-zoom-indicator').forEach(function (indicator) {
+      indicator.hidden = true
+    })
+
+    const tabEl = Array.from(document.getElementsByClassName('tab-item')).find(function (el) {
+      return el.getAttribute('data-tab') === tabId
+    })
+    if (!tabEl) {
+      return
+    }
+
+    const el = tabEl.querySelector('.tab-zoom-indicator')
     el.textContent = Math.round(factor * 100) + '%'
     el.hidden = false
     clearTimeout(this.zoomIndicatorTimeout)

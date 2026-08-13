@@ -100,6 +100,16 @@ const tabBar = {
 
     tabEl.appendChild(titleContainer)
 
+    const zoomIndicator = document.createElement('span')
+    zoomIndicator.className = 'tab-zoom-indicator'
+    zoomIndicator.hidden = true
+    tabEl.appendChild(zoomIndicator)
+
+    const copyPageURLNotification = document.createElement('span')
+    copyPageURLNotification.className = 'tab-copy-page-url-notification'
+    copyPageURLNotification.hidden = true
+    tabEl.appendChild(copyPageURLNotification)
+
     // click to enter edit mode or switch to a tab
     tabEl.addEventListener('click', function (e) {
       if (tabs.getSelected() !== data.id) { // else switch to tab if it isn't focused

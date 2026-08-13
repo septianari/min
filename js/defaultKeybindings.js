@@ -9,6 +9,29 @@ var keyMapModule = require('util/keyMap.js')
 var settings = require('util/settings/settings.js')
 
 var keyMap = keyMapModule.userKeyMap(settings.get('keyMap'))
+var copyPageURLNotificationTimeout = null
+
+function showCopyPageURLNotification (tabId) {
+  document.querySelectorAll('.tab-copy-page-url-notification').forEach(function (notification) {
+    notification.hidden = true
+  })
+
+  const tabEl = Array.from(document.getElementsByClassName('tab-item')).find(function (el) {
+    return el.getAttribute('data-tab') === tabId
+  })
+  if (!tabEl) {
+    return
+  }
+
+  const notification = tabEl.querySelector('.tab-copy-page-url-notification')
+  notification.textContent = l('copied')
+  notification.hidden = false
+  clearTimeout(copyPageURLNotificationTimeout)
+
+  copyPageURLNotificationTimeout = setTimeout(function () {
+    notification.hidden = true
+  }, 1200)
+}
 
 function reloadCurrentTab (ignoreCache = false) {
   if (tabs.get(tabs.getSelected()).url.startsWith(webviews.internalPages.error)) {
@@ -299,6 +322,7 @@ const defaultKeybindings = {
           bookmark: tab.title,
           html: anchorTag.outerHTML
         })
+        showCopyPageURLNotification(tab.id)
       }
     })
   }
