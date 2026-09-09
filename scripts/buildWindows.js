@@ -59,14 +59,29 @@ async function afterPackageBuilt (packagePath) {
     })
 }
 
-// creating multiple packages simultaneously causes errors in electron-rebuild, so do one arch at a time instead
-createPackage('win32', { arch: Arch.x64 })
-  .then(afterPackageBuilt)
-  .then(function () {
-    return createPackage('win32', { arch: Arch.ia32 })
-  })
-  .then(afterPackageBuilt)
-  .then(function () {
-    return createPackage('win32', { arch: Arch.arm64 })
-  })
-  .then(afterPackageBuilt)
+async function buildWindows () {
+  const electronVersion = require('electron/package.json').version
+  const architectures = [Arch.x64]
+
+  // Electron 44 stopped publishing Windows 32-bit binaries.
+  if (Number(electronVersion.split('.')[0]) < 44) {
+    architectures.push(Arch.ia32)
+  } else {
+    console.log(`Skipping Windows ia32: Electron ${electronVersion} only supports x64 and arm64.`)
+  }
+  architectures.push(Arch.arm64)
+
+  // Creating multiple packages simultaneously causes errors in electron-rebuild.
+  for (const arch of architectures) {
+    const packagePath = await createPackage('win32', { arch })
+    await afterPackageBuilt(packagePath)
+  }
+}
+
+buildWindows().catch(err => {
+  console.error('Windows build failed:', err)
+  if (err.response && err.response.url) {
+    console.error('Failed download URL:', err.response.url)
+  }
+  process.exitCode = 1
+})
