@@ -316,7 +316,56 @@ function downloadHandler (event, item, webContents) {
   return true
 }
 
+function getContentPageSource (contentPageURL) {
+  try {
+    const page = new URL(contentPageURL)
+    if (page.protocol !== 'min:' || page.host !== 'app' ||
+        !['/pages/pdfViewer/index.html', '/reader/index.html'].includes(page.pathname)) {
+      return null
+    }
+    const source = new URL(page.searchParams.get('url'))
+    // Fragments are not sent in HTTP requests.
+    source.hash = ''
+    return source.href
+  } catch (e) {
+    return null
+  }
+}
+
 function listenForDownloadHeaders (ses) {
+  // A redirect grants access only to the next URL in this same request and viewer.
+  const redirects = new Map()
+
+  function isAccessAllowedFromContentPage (details, contentPageURL) {
+    const source = getContentPageSource(contentPageURL)
+    if (!source) return false
+    const redirect = redirects.get(details.id)
+    if (redirect) {
+      return redirect.url === details.url && redirect.source === source &&
+        redirect.webContentsId === details.webContents.id
+    }
+    return source === details.url
+  }
+
+  ses.webRequest.onBeforeRedirect(function (details) {
+    const contentPageURL = details.webContents?.getURL()
+    if (isAccessAllowedFromContentPage(details, contentPageURL)) {
+      redirects.set(details.id, {
+        url: details.redirectURL.split('#')[0],
+        source: getContentPageSource(contentPageURL),
+        webContentsId: details.webContents.id
+      })
+    } else {
+      redirects.delete(details.id)
+    }
+  })
+
+  function clearRedirect (details) {
+    redirects.delete(details.id)
+  }
+  ses.webRequest.onCompleted(clearRedirect)
+  ses.webRequest.onErrorOccurred(clearRedirect)
+
   ses.webRequest.onHeadersReceived(function (details, callback) {
     if (details.responseHeaders && isReportEndpointURL(details.url)) {
       const typeHeader = getHeaderValues(details.responseHeaders, 'content-type')
@@ -386,14 +435,13 @@ function listenForDownloadHeaders (ses) {
       })
     }
 
-    /*
-    SECURITY POLICY EXCEPTION:
-    reader and PDF internal pages get universal access to web resources
-    Note: we can't limit to the URL in the query string, because there could be redirects
-    */
-    if (details.webContents && (details.webContents.getURL().startsWith('min://app/pages/pdfViewer') || details.webContents.getURL().startsWith('min://app/reader/') || details.webContents.getURL() === 'min://app/index.html')) {
+    // Only the app shell and the viewer's own source request receive a CORS exception.
+    const webContentsURL = details.webContents?.getURL()
+    if (details.responseHeaders && details.webContents &&
+        (webContentsURL === 'min://app/index.html' ||
+         isAccessAllowedFromContentPage(details, webContentsURL))) {
       const filteredHeaders = Object.fromEntries(
-        Object.entries(details.responseHeaders).filter(([key, val]) => key.toLowerCase() !== 'access-control-allow-origin' && key.toLowerCase() !== 'access-control-allow-credentials')
+        Object.entries(details.responseHeaders).filter(([key]) => key.toLowerCase() !== 'access-control-allow-origin' && key.toLowerCase() !== 'access-control-allow-credentials')
       )
 
       callback({

@@ -55,6 +55,13 @@ const PDFViewer = {
   },
   initialize: function () {
     ipc.on('openPDF', PDFViewer.handlePDFOpenEvent)
+    // Reset the originating document if its URL changes without a full navigation.
+    webviews.bindEvent('did-navigate-in-page', function (tabId, url, isMainFrame) {
+      if (isMainFrame && url.split(/[?#]/)[0] === PDFViewer.url.base) {
+        console.warn('Resetting PDF viewer because in-page navigation occurred')
+        webviews.callAsync(tabId, 'reload')
+      }
+    })
   }
 }
 

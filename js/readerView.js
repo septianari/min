@@ -72,6 +72,13 @@ var readerView = {
     webviews.callAsync(tabs.getSelected(), 'executeJavaScript', 'parentProcessActions.printArticle()')
   },
   initialize: function () {
+    // Reset the originating document if its URL changes without a full navigation.
+    webviews.bindEvent('did-navigate-in-page', function (tabId, url, isMainFrame) {
+      if (isMainFrame && url.split(/[?#]/)[0] === readerView.readerURL) {
+        console.warn('Resetting reader view because in-page navigation occurred')
+        webviews.callAsync(tabId, 'reload')
+      }
+    })
     // update the reader button on page load
 
     webviews.bindEvent('did-start-navigation', function (tabId, url, isInPlace, isMainFrame, frameProcessId, frameRoutingId) {
