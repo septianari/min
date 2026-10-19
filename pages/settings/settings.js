@@ -360,6 +360,21 @@ newWindowSettingInput.addEventListener('change', function() {
   settings.set('newWindowOption', parseInt(this.value))
 })
 
+/* home page setting */
+
+var homePageInput = document.getElementById('input-home-page')
+
+settings.get('homePage', function (value) {
+  if (value) {
+    homePageInput.value = value
+  }
+})
+
+homePageInput.addEventListener('input', function (e) {
+  const value = this.value
+  settings.set('homePage', value || null)
+})
+
 /* userscripts setting */
 
 settings.get('userscriptsEnabled', function (value) {

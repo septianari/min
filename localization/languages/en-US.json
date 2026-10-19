@@ -205,6 +205,8 @@
     "settingsNewWindowOptions": "In new windows: ",
     "settingsNewWindowCreateTask": "Create a new task",
     "settingsNewWindowPickTask": "Show task list",
+    "settingsHomePage": "Home page: ",
+    "settingsHomePageDescription": "Leave empty to open a blank tab when Min starts or when a new tab is opened.",
     "settingsSearchEngineHeading": "Search Engine",
     "settingsDefaultSearchEngine": "Choose a default search engine:",
     "settingsDDGExplanation": "Set DuckDuckGo as the default search engine to see instant answers in the searchbar.",

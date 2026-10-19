@@ -64,6 +64,43 @@ function addTask () {
   addTab()
 }
 
+/* returns the configured home page, or null if none is set */
+
+function getHomePage () {
+  const homePage = settings.get('homePage')
+  if (typeof homePage === 'string' && homePage.trim()) {
+    return homePage.trim()
+  }
+  return null
+}
+
+/*
+loads the configured home page into an empty tab. No-op if the tab already has a
+URL or if no home page is set. Returns true if the home page was opened.
+*/
+function openHomePage (tabId) {
+  const tab = tabs.get(tabId)
+  if (!tab || tab.url) {
+    return false
+  }
+
+  const homePage = getHomePage()
+  if (!homePage) {
+    return false
+  }
+
+  tabs.update(tabId, { url: homePage })
+
+  // normally the page is loaded when the view is created, but if the view
+  // already exists (e.g. a blank tab that was reused from a restored session)
+  // it has to be loaded now
+  if (webviews.hasViewForTab(tabId)) {
+    webviews.update(tabId, homePage)
+  }
+
+  return true
+}
+
 /* creates a new tab */
 
 /*
@@ -72,6 +109,11 @@ options
   options.openInBackground - whether to open the tab without switching to it. Defaults to false.
 */
 function addTab (tabId = tabs.add(), options = {}) {
+  // if a home page is configured, open it instead of showing a blank tab
+  if (openHomePage(tabId)) {
+    options = Object.assign({}, options, { enterEditMode: false })
+  }
+
   /*
   adding a new tab should destroy the current one if either:
   * The current tab is an empty, non-private tab, and the new tab is private
@@ -397,6 +439,7 @@ ipc.on('deleteAllTasks', deleteAllTasks)
 module.exports = {
   addTask,
   addTab,
+  openHomePage,
   deleteAllTasks,
   destroyTask,
   destroyTab,

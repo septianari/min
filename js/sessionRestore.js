@@ -150,7 +150,9 @@ const sessionRestore = {
         if (tasks.getSelected().tabs.isEmpty() || startupConfigOption === 1) {
           browserUI.switchToTask(mostRecentTasks[0].id)
           if (tasks.getSelected().tabs.isEmpty()) {
-            tabEditor.show(tasks.getSelected().tabs.getSelected())
+            if (!browserUI.openHomePage(tasks.getSelected().tabs.getSelected())) {
+              tabEditor.show(tasks.getSelected().tabs.getSelected())
+            }
           }
         } else {
           window.createdNewTaskOnStartup = true
@@ -158,7 +160,9 @@ const sessionRestore = {
           var lastTask = tasks.byIndex(tasks.getLength() - 1)
           if (lastTask && lastTask.tabs.isEmpty() && !lastTask.name) {
             browserUI.switchToTask(lastTask.id)
-            tabEditor.show(lastTask.tabs.getSelected())
+            if (!browserUI.openHomePage(lastTask.tabs.getSelected())) {
+              tabEditor.show(lastTask.tabs.getSelected())
+            }
           } else {
             browserUI.addTask()
           }

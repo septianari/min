@@ -71,6 +71,23 @@ html {
   padding-top: 0.2em;
 }
 
+/* keep the home page label and input vertically aligned */
+#section-home-page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#section-home-page #input-home-page {
+  width: 475px;
+  max-width: 90vw;
+}
+
+#section-home-page .settings-info-subheading {
+  flex-basis: 100%;
+  margin-top: 0.35em;
+}
+
 .browsing-data-section {
   margin-top: 0.75em;
 }

@@ -203,6 +203,8 @@
     "settingsNewWindowOptions": null, //missing translation
     "settingsNewWindowCreateTask": null, //missing translation
     "settingsNewWindowPickTask": null, //missing translation
+    "settingsHomePage": "Halaman beranda: ",
+    "settingsHomePageDescription": "Kosongkan untuk membuka tab kosong saat Min dimulai atau saat tab baru dibuka.",
     "settingsSearchEngineHeading": "Mesin Pencarian",
     "settingsDefaultSearchEngine": "Pilih mesin pencarian utama:",
     "settingsDDGExplanation": "Atur DuckDuckGo sebagai mesin pencarian untuk melihat jawaban instan di bilah pencarian.",
