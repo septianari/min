@@ -52,7 +52,6 @@ const tabBar = {
 
     tabEl.appendChild(readerView.getButton(data.id))
     tabEl.appendChild(tabAudio.getButton(data.id))
-    tabEl.appendChild(progressBar.create())
 
     // icons
 
@@ -304,16 +303,24 @@ settings.listen('showDividerBetweenTabs', function (dividerPreference) {
   tabBar.handleDividerPreference(dividerPreference)
 })
 
+/* the single glowing progress bar shown along the bottom of the navbar */
+tabBar.navBar.appendChild(progressBar.create())
+
 /* tab loading and progress bar status */
 webviews.bindEvent('did-start-loading', function (tabId) {
-  progressBar.update(tabBar.getTab(tabId).querySelector('.progress-bar'), 'start')
+  progressBar.setLoading(tabId, true)
   tabs.update(tabId, { loaded: false })
 })
 
 webviews.bindEvent('did-stop-loading', function (tabId) {
-  progressBar.update(tabBar.getTab(tabId).querySelector('.progress-bar'), 'finish')
+  progressBar.setLoading(tabId, false)
   tabs.update(tabId, { loaded: true })
   tabBar.updateTab(tabId)
+})
+
+/* keep the progress bar in sync when switching tabs */
+tasks.on('tab-selected', function () {
+  progressBar.update()
 })
 
 tasks.on('tab-updated', function (id, key) {
