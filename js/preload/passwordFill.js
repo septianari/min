@@ -72,10 +72,12 @@ function createUnlockButton (input) {
   button.innerHTML = keyIcon
 
   // Button hover.
-  button.addEventListener('mouseenter', (event) => {
+	button.addEventListener('mouseenter', (event) => {
+	  if (!event.isTrusted) return
     button.style.opacity = 1.0
   })
-  button.addEventListener('mouseleave', (event) => {
+	button.addEventListener('mouseleave', (event) => {
+	  if (!event.isTrusted) return
     button.style.opacity = 0.7
   })
 
@@ -214,15 +216,18 @@ function addFocusListener (element, credentials) {
     suggestionItem.style = 'padding: 10px; cursor: pointer; background-color: #fff; border-bottom: 1px solid #d4d4d4;'
 
     // Hover.
-    suggestionItem.addEventListener('mouseenter', (event) => {
+	  suggestionItem.addEventListener('mouseenter', (event) => {
+		if (!event.isTrusted) return
       suggestionItem.style.backgroundColor = '#e4e4e4'
     })
-    suggestionItem.addEventListener('mouseleave', (event) => {
+	  suggestionItem.addEventListener('mouseleave', (event) => {
+		if (!event.isTrusted) return
       suggestionItem.style.backgroundColor = '#fff'
     })
 
     // When user clicks on the suggestion, we populate the form inputs with selected credentials.
-    suggestionItem.addEventListener('click', function (e) {
+	  suggestionItem.addEventListener('click', function (e) {
+		if (!e.isTrusted) return
       const selectedCredentials = credentials.filter(el => { return el.username === username })[0]
       fillCredentials(selectedCredentials)
       removeAutocompleteList()
@@ -233,7 +238,8 @@ function addFocusListener (element, credentials) {
   }
 
   // Creates autocomplete list and adds it below the activated field.
-  function showAutocompleteList (e) {
+	function showAutocompleteList(e) {
+	    if (e && !e.isTrusted) return
     removeAutocompleteList()
     const container = buildContainer()
     for (const cred of credentials) {
@@ -247,7 +253,8 @@ function addFocusListener (element, credentials) {
   element.addEventListener('click', showAutocompleteList)
 
   // Hide options overlay when user clicks out of the input field.
-  document.addEventListener('click', function (e) {
+	document.addEventListener('click', function (e) {
+	   if (!e.isTrusted) return
     if (e.target !== element) {
       removeAutocompleteList()
     }
@@ -282,11 +289,13 @@ function checkInitialFocus () {
   maybeAddUnlockButton(document.activeElement)
 }
 
-function handleFocus (event) {
+function handleFocus(event) {
+	if (!event.isTrusted) return
   maybeAddUnlockButton(event.target)
 }
 
-function handleBlur (event) {
+function handleBlur(event) {
+	if (!event.isTrusted) return
   if (currentUnlockButton !== null && currentUnlockButton.parentElement != null) {
     currentUnlockButton.parentElement.removeChild(currentUnlockButton)
     currentUnlockButton = null
@@ -335,16 +344,18 @@ ipc.on('password-autofill-enabled', (event) => {
 
 // Check if password autofill is configured.
 window.addEventListener('load', function (event) {
+	if (!event.isTrusted) return
   ipc.send('password-autofill-check')
 })
 
 // send passwords back to the main process so they can be saved to storage
-function handleFormSubmit () {
+function handleFormSubmit (event) {
+  if (event && !event.isTrusted) return
   var usernameValue = getBestUsernameField()?.value
   var passwordValue = getBestPasswordField()?.value
 
   if ((usernameValue && usernameValue.length > 0) && (passwordValue && passwordValue.length > 0)) {
-    ipc.send('password-form-filled', [window.location.hostname, usernameValue, passwordValue])
+     ipc.send('password-form-filled', [window.location.toString(), usernameValue, passwordValue])
   }
 }
 
@@ -352,6 +363,7 @@ window.addEventListener('submit', handleFormSubmit)
 
 // watch for clicks on button[type=submit]
 window.addEventListener('click', function (e) {
+	if (!e.isTrusted) return
   const path = (e.path) || (e.composed && e.composedPath())
   if (!path) {
     return
@@ -372,6 +384,7 @@ HTMLFormElement.prototype.submit = function () {
 `)
 
 window.addEventListener('message', function (e) {
+	if (!e.isTrusted) return
   if (e.data && e.data.message && e.data.message === 'formSubmit') {
     handleFormSubmit()
   }

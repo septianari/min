@@ -47,8 +47,10 @@ module.exports = {
           if (node.id === 'tab-editor-input') {
             inputMenu[1].push({
               label: l('pasteAndGo'),
-              click: function () {
-                searchbar.openURL(electron.clipboard.readText())
+				click: function () {
+					ipc.invoke('clipboardReadText').then(function (text) {
+						searchbar.openURL(text)
+					})
               }
             })
           }

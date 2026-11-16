@@ -1,5 +1,6 @@
 const electron = require('electron')
 const fs = require('fs')
+const fsPromises = require("fs/promises")
 const path = require('path')
 
 const {
@@ -16,7 +17,9 @@ const {
   nativeTheme,
   shell,
   net,
-  WebContentsView
+	WebContentsView,
+	clipboard,
+	ClipboardItem
 } = electron
 
 crashReporter.start({

@@ -16,9 +16,7 @@ async function afterPackageBuilt (packagePath) {
 
   let archSuffix
 
-  if (packagePath.includes('ia32')) {
-    archSuffix = '-ia32'
-  } else if (packagePath.includes('arm64')) {
+  if (packagePath.includes('arm64')) {
     archSuffix = '-arm64'
   } else {
     archSuffix = ''

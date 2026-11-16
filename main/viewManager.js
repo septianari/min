@@ -12,6 +12,17 @@ var insecureCertAllowlist = new WeakMap() // Session -> Set(origin)
 var globalLaunchRequests = 0
 var externalProtocolAutoOpenSetting = 'externalProtocolAutoOpen'
 
+function createWebContentsView (preferences, contents) {
+  const view = new WebContentsView({ webPreferences: preferences, ...(contents ? { webContents: contents } : {}) })
+  view.webContents.on('will-frame-navigate', function (event) {
+    if (event.url?.startsWith('min:')) {
+      event.preventDefault()
+      console.warn('Blocked navigation to URL', event.url)
+    }
+  })
+  return view
+}
+
 function getHTTPSOrigin (url) {
   if (!url) {
     return null
@@ -255,7 +266,7 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
     view.setBackgroundColor('#fff')
     viewStateMap[id].loadedInitialURL = true
   } else {
-    view = new WebContentsView({ webPreferences: viewPrefs })
+    view = createWebContentsView(viewPrefs)
   }
 
   // fix for MaxListenersExceededWarning
@@ -339,7 +350,7 @@ function createView (existingViewId, id, webPreferences, boundsString, events) {
     return {
       action: 'allow',
       createWindow: function (options) {
-        const view = new WebContentsView({ webPreferences: getDefaultViewWebPreferences(), webContents: options.webContents })
+        const view = createWebContentsView(getDefaultViewWebPreferences(), options.webContents)
 
         var popupId = Math.random().toString()
         temporaryPopupViews[popupId] = view
@@ -822,7 +833,7 @@ ipc.handle('getNavigationHistory', function (e, id) {
 
 ipc.on('getCapture', function (e, data) {
   var view = viewMap[data.id]
-  if (!view) {
+  if (!view?.webContents) {
     // view could have been destroyed
     return
   }
